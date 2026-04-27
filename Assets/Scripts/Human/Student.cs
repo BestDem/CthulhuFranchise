@@ -4,7 +4,6 @@ using UnityEngine;
 
 public class Student : Human
 {
-    [SerializeField] private GameObject emotion;
     [SerializeField] private ListReactions listR;
     [SerializeField] private float speed;
     private void Awake()

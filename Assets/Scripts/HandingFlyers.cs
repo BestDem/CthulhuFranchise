@@ -6,7 +6,7 @@ public class HandingFlyers : MonoBehaviour
 {
     void Update()
     {
-        if (Input.GetMouseButtonDown(0))
+        if(Input.GetMouseButtonDown(0))
         {
             Vector3 mouseScreenPos = Input.mousePosition;
             Vector3 mouseWorldPos = Camera.main.ScreenToWorldPoint(mouseScreenPos);
@@ -17,7 +17,9 @@ public class HandingFlyers : MonoBehaviour
                 if(hit.transform.GetComponent<Human>())
                 {
                     hit.transform.TryGetComponent<Human>(out Human human);
+                    human.emotion[0].SetActive(false);
                     human.SetReaction(FlyersController.singltoneFlyers.CurrentFlyer());
+                    FlyersController.singltoneFlyers.DeletFlyer();
                 }
             }
         }

@@ -4,7 +4,6 @@ using UnityEngine;
 
 public class Blogger : Human
 {
-    [SerializeField] private GameObject emotion;
     [SerializeField] private ListReactions listR;
     [SerializeField] private float speed;
 
