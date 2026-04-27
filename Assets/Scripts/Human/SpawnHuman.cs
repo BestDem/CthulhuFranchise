@@ -8,6 +8,7 @@ public class SpawnHuman : MonoBehaviour
     [SerializeField] private GameObject[] human;
     [SerializeField] private int speedSpawn;
     private List<GameObject> spawnedHuman = new List<GameObject>();
+    private bool canSpawn = true;
     private int len;
     private float timer = 0;
     private void Start()
@@ -15,14 +16,31 @@ public class SpawnHuman : MonoBehaviour
         len = human.Length;
         timer = speedSpawn;
     }
+
+    private void OnEnable()
+    {
+        DayController.dayEnd += EndDay;
+    }
+    private void OnDisable()
+    {
+        DayController.dayEnd -= EndDay;
+    }
+    private void EndDay(bool endD)
+    {
+        canSpawn = !canSpawn;
+    }
+
     private void Update()
     {
-        timer -= Time.deltaTime;
-        if(timer < 0)
+        if(canSpawn)
         {
-            timer = speedSpawn;
-            GameObject h = Instantiate(human[Random.Range(0,len)], spawnpoint);
-            spawnedHuman.Add(h);
+            timer -= Time.deltaTime;
+            if(timer < 0)
+            {
+                timer = speedSpawn;
+                GameObject h = Instantiate(human[Random.Range(0,len)], spawnpoint);
+                spawnedHuman.Add(h);
+            }
         }
     }
 

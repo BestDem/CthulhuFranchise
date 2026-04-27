@@ -7,33 +7,14 @@ public class Worker : Human
     [SerializeField] private GameObject emotion;
     [SerializeField] private ListReactions listR;
     [SerializeField] private float speed;
-    [SerializeField] private int reactionState = 0; //2 - придет, 1 - сомнение, 0 - не придет
-    private Transform human;
-    private void Start()
+    private void Awake()
     {
-        human = gameObject.transform;
+        needReaction = listR.NeedWorker;
     }
     private void Update()
     {
         float x = Time.deltaTime * speed;
         Vector2 movement = new Vector2(-x, 0);
         transform.Translate(movement);
-    }
-
-    public override void SetReaction(string reaction)
-    {
-        if(reaction == listR.NeedWorker[0])
-        {
-            reactionState = 2;
-        }
-        if(reaction == listR.NeedWorker[1])
-        {
-            reactionState = 1;
-        }
-        else
-        {
-            reactionState = 0;
-        }
-        Debug.Log("Рабочий состояние: " + reactionState + " дана листовка: " + reaction);
     }
 }

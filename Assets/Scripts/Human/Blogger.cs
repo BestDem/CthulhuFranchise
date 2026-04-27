@@ -2,14 +2,15 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Student : Human
+public class Blogger : Human
 {
     [SerializeField] private GameObject emotion;
     [SerializeField] private ListReactions listR;
     [SerializeField] private float speed;
-    private void Awake()
+
+    private void Start()
     {
-        needReaction = listR.NeedStudent;
+        needReaction = listR.NeedBlogger;
     }
     private void Update()
     {
