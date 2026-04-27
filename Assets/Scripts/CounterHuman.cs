@@ -13,11 +13,13 @@ public class CounterHuman : MonoBehaviour
         {
             int value = 0;
             countRecruited += add;
-            if(countRecruit.TryGetValue(name, out value))
-            {
-                countRecruit.Add(name, value + 1);
-            }
-            countRecruit.Add(name, 1);
+            countRecruit.TryGetValue(name, out value);
+            if(value > 0)
+                countRecruit[name] = value + 1;
+            else
+                countRecruit.Add(name, 1);
+            Debug.Log(countRecruit[name]+ name);
+            //countRecruit.Add(name, 1);
         }
     }
 }
