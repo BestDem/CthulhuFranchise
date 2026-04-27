@@ -4,5 +4,5 @@ using UnityEngine;
 
 public abstract class Human : MonoBehaviour
 {
-    public abstract void SetReaction(GameObject reaction);
+    public abstract void SetReaction(string reaction);
 }

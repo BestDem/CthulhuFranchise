@@ -29,7 +29,6 @@ public class SpawnHuman : MonoBehaviour
     public void DeleteHuman(GameObject hum)
     {
         spawnedHuman.Remove(hum);
-        Debug.Log(spawnedHuman);
         Destroy(hum);
     }
 }

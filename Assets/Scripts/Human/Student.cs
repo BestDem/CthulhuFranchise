@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Worker : Human
+public class Student : Human
 {
     [SerializeField] private GameObject emotion;
     [SerializeField] private ListReactions listR;
@@ -22,11 +22,11 @@ public class Worker : Human
 
     public override void SetReaction(string reaction)
     {
-        if(reaction == listR.NeedWorker[0])
+        if(reaction == listR.NeedStudent[0])
         {
             reactionState = 2;
         }
-        if(reaction == listR.NeedWorker[1])
+        if(reaction == listR.NeedStudent[1])
         {
             reactionState = 1;
         }
@@ -34,6 +34,6 @@ public class Worker : Human
         {
             reactionState = 0;
         }
-        Debug.Log("Рабочий состояние: " + reactionState + " дана листовка: " + reaction);
+        Debug.Log("Студент состояние: " + reactionState + " дана листовка: " + reaction);
     }
 }

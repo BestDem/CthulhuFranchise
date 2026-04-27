@@ -10,7 +10,6 @@ public class DeleteHumanTrigger : MonoBehaviour
     {
         if(other.tag == "Human")
         {
-            Debug.Log("Коснулся триггера");
             spawnHuman.DeleteHuman(other.gameObject);
         }
     }
