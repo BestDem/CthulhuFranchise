@@ -5,9 +5,18 @@ using UnityEngine;
 public class SpawnHuman : MonoBehaviour
 {
     [SerializeField] private Transform spawnpoint;
-    [SerializeField] private GameObject[] human;
+    [SerializeField] private GameObject[] human; //0-worker 1-student 2-blogger 3-esoteric 4-retiree
     [SerializeField] private ListReactions listReactions;
+    private Dictionary<string, int> nameToIndex = new Dictionary<string, int>()
+    {
+        {"worker", 0}, {"student", 1}, {"blogger", 2}, {"esoteric", 3}, {"retiree", 4}
+    };
+    private Dictionary<string, float> weights = new Dictionary<string, float>()
+    {
+        {"worker", 25}, {"student", 25}, {"retiree", 25}, {"blogger", 25}, {"esoteric", 25}
+    };
     private List<GameObject> spawnedHuman = new List<GameObject>();
+    private Dictionary<string, float> weight = new Dictionary<string, float>();
     private bool canSpawn = true;
     private int len;
     private float timerSpawnHuman = 0;
@@ -47,10 +56,43 @@ public class SpawnHuman : MonoBehaviour
             if(timerSpawnHuman < 0)
             {
                 timerSpawnHuman = frequencySpawn;
-                GameObject h = Instantiate(human[Random.Range(0,len)], spawnpoint);
+                GameObject prefab = GetRandomHumanByWeight();
+                GameObject h = Instantiate(prefab, spawnpoint);
                 spawnedHuman.Add(h);
             }
         }
+    }
+
+    public void SetWeight(string type, float newWeight)
+    {
+        if (weights.ContainsKey(type))
+        {
+            weights[type] = newWeight;
+        }
+    }
+    private GameObject GetRandomHumanByWeight()
+    {
+        float totalWeight = 0f;
+
+        foreach (var w in weights.Values)
+            totalWeight += w;
+
+        float randomPoint = Random.Range(0f, totalWeight);
+
+        float current = 0f;
+
+        foreach (var pair in weights)
+        {
+            current += pair.Value;
+
+            if (randomPoint <= current)
+            {
+                int index = nameToIndex[pair.Key];
+                return human[index];
+            }
+        }
+
+        return human[0];
     }
 
     public void DeleteHuman(GameObject hum)
