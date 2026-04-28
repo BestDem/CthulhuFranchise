@@ -26,12 +26,12 @@ public class UpgradeWindow : MonoBehaviour
 
     private void Start()
     {
-        CookieButtonLabel.SetText(CookieUpgrade.GetButtonLabel());
-        AltarButtonLabel.SetText(AltarUpgrade.GetButtonLabel());
-        PremiumFlyerButtonLabel.SetText(PremiumFlyerUpgrade.GetButtonLabel());
-        CandleButtonLabel.SetText(CandleUpgrade.GetButtonLabel());
-        ChoirButtonLabel.SetText(ChoirUpgrade.GetButtonLabel());
-        PaidFrontButtonLabel.SetText(PaidFrontUpgrade.GetButtonLabel());
+        CookieButtonLabel.SetText(CookieUpgrade.Header);
+        AltarButtonLabel.SetText(AltarUpgrade.Header);
+        PremiumFlyerButtonLabel.SetText(PremiumFlyerUpgrade.Header);
+        CandleButtonLabel.SetText(CandleUpgrade.Header);
+        ChoirButtonLabel.SetText(ChoirUpgrade.Header);
+        PaidFrontButtonLabel.SetText(PaidFrontUpgrade.Header);
 
         CookieButton.onClick.AddListener(BuyCookieUpgrade);
         AltarButton.onClick.AddListener(BuyAltarUpgrade);
