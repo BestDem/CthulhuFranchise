@@ -8,12 +8,17 @@ public class Messa : MonoBehaviour
     [Header("Основные параметры")]
     
     [SerializeField] private float Money;
+    
     [SerializeField] private float messaDuration = 3f;
+
+    [HideInInspector] public float TotalIncome;
+    [HideInInspector] public float DailyIncome;
     [HideInInspector] public int CurrentDay = 1;
 
     [SerializeField] private int[] auditory = new int[5];
     [SerializeField] private int[] newAdepts = new int[5];
     [SerializeField] private int[] oldAdepts = new int[5];
+
     private int[] defaultAuditoryValues = new int[5];
     private PlaySoundsComponent sfxPlayer;
 
@@ -128,6 +133,14 @@ public class Messa : MonoBehaviour
         foreach (int i in array) count += i;
         return count;
     }
+    public int TotalAdepts()
+    {
+        return TotalCount(oldAdepts) + TotalCount(newAdepts);
+    }
+    public int NewAdepts()
+    {
+        return TotalCount(newAdepts);
+    }
     public bool SpendMoney(float cost)
     {
         if (Money < cost) return false;
@@ -225,13 +238,14 @@ public class Messa : MonoBehaviour
 
         float frontRow = Upgrades.HasPaidFrontRow ? auditory[0] * paidFrontRowBonus : 0f;
 
-        float totalMoney = visitorIncome + oldAdeptIncome + frontRow;
+        DailyIncome = visitorIncome + oldAdeptIncome + frontRow;
 
-        if (Upgrades.HasCandles && isGoodOrBetter) totalMoney *= candlesMultiplier;
+        if (Upgrades.HasCandles && isGoodOrBetter) DailyIncome *= candlesMultiplier;
 
-        if (Upgrades.IsDayFive) totalMoney *= auditMultiplier;
+        if (Upgrades.IsDayFive) DailyIncome *= auditMultiplier;
 
-        Money += totalMoney;
+        Money += DailyIncome;
+        TotalIncome += DailyIncome;
 
         for (int i = 0; i < 5; i++) auditory[i] = 0;
 
@@ -247,7 +261,12 @@ public class Messa : MonoBehaviour
     }
     public void Next()
     {
-        if (Menus[(int)MenuID.MessaResults].activeSelf)
+        if (Menus[(int)MenuID.PendingMessa].activeSelf)
+        {
+            StopAllCoroutines();
+            OpenMenu(MenuID.MessaResults);
+        }
+        else if (Menus[(int)MenuID.MessaResults].activeSelf)
         {
             OpenMenu(MenuID.CthulhuReport);
         }
