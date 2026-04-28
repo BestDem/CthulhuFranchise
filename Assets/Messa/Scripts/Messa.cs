@@ -3,10 +3,10 @@ using TMPro;
 
 public class Messa : MonoBehaviour
 {
-    
-    public float Money;
+     
 
     [HideInInspector] public int CurrentDay = 1;
+    [SerializeField] private float Money;
     [SerializeField] private int[] auditory = new int[5];
     [SerializeField] private int[] newAdepts = new int[5];
     [SerializeField] private int[] oldAdepts = new int[5];
@@ -76,15 +76,34 @@ public class Messa : MonoBehaviour
     [SerializeField] private TextMeshProUGUI AuditoryBloggersLabel;
     [SerializeField] private TextMeshProUGUI AuditoryEsotericsLabel;
 
+    [SerializeField] private GameObject UpgradeCanvas;
+    public static Messa Instance;
+
     private int TotalCount(int[] array)
     {
         int count = 0;
         foreach (int i in array) count += i;
         return count;
     }
-
+    public bool SpendMoney(float cost)
+    {
+        if (Money < cost) return false;
+        Money -= cost;
+        return true;
+    }
+    private void Awake()
+    {
+        if (Instance != null && Instance != this)
+        {
+            Destroy(gameObject);
+            return;
+        }
+        Instance = this;
+        DontDestroyOnLoad(gameObject);
+    }
     void Start()
     {
+        UpgradeCanvas.SetActive(false);
         defaultAuditoryValues = (int[])auditory.Clone();
         BooleanUpgrades.ApplyToStatic();
         UpdateUI();
@@ -224,14 +243,14 @@ public class Messa : MonoBehaviour
     {
         InitiateAdepts();
         auditory = (int[])defaultAuditoryValues.Clone();
+        Upgrades.IsDayFive = CurrentDay % 7 == 4;
         CurrentDay++;
         UpdateUI();
     }
-
-    private void UpdateUI()
+    public void UpdateUI()
     {
         DayLabel?.SetText($"День: {CurrentDay}");
-        MoneyLabel?.SetText($"${Money:F2}");
+        MoneyLabel?.SetText($"${(int)Money}");
 
         OldAdeptsCountLabel?.SetText($"Старые адепты: {TotalCount(oldAdepts)}");
         NewAdeptsCountLabel?.SetText($"Новые адепты: {TotalCount(newAdepts)}");
