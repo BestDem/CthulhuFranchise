@@ -5,10 +5,9 @@ using System.Collections;
 [RequireComponent(typeof(PlaySoundsComponent))]
 public class Messa : MonoBehaviour
 {
+    public int oldAdeptsCount;
     [Header("Основные параметры")]
-    
-    [SerializeField] private float Money;
-    
+    [SerializeField] private float Money;   
     [SerializeField] private float messaDuration = 3f;
 
     [HideInInspector] public float TotalIncome;
@@ -30,7 +29,10 @@ public class Messa : MonoBehaviour
     [SerializeField] private float[] baseIncome = new float[5] { 4.0f, 0.8f, 1.4f, 1.1f, 1.3f };
 
     [Header("Улучшения")]
-    [SerializeField] private UpgradesBridge BooleanUpgrades;
+    public UpgradeInfo[] UpgradeList;
+    [SerializeField] private UpgradePanel upgradePanel1;
+    [SerializeField] private UpgradePanel upgradePanel2;
+    [SerializeField] private UpgradePanel upgradePanel3;
 
     [Header("Множители проповеди")]
     [SerializeField] private float badMultiplier = 0.68f;
@@ -72,51 +74,29 @@ public class Messa : MonoBehaviour
     [SerializeField] private TextMeshProUGUI DayLabel;
     [SerializeField] private TextMeshProUGUI MoneyLabel;
     [SerializeField] private TextMeshProUGUI OldAdeptsCountLabel;
-    [SerializeField] private TextMeshProUGUI NewAdeptsCountLabel;
     [SerializeField] private TextMeshProUGUI AuditoryCountLabel;
-
-    [SerializeField] private TextMeshProUGUI AdeptWorkersLabel;
-    [SerializeField] private TextMeshProUGUI AdeptStudentsLabel;
-    [SerializeField] private TextMeshProUGUI AdeptPensionersLabel;
-    [SerializeField] private TextMeshProUGUI AdeptBloggersLabel;
-    [SerializeField] private TextMeshProUGUI AdeptEsotericsLabel;
 
     [SerializeField] private TextMeshProUGUI AuditoryWorkersLabel;
     [SerializeField] private TextMeshProUGUI AuditoryStudentsLabel;
     [SerializeField] private TextMeshProUGUI AuditoryPensionersLabel;
     [SerializeField] private TextMeshProUGUI AuditoryBloggersLabel;
     [SerializeField] private TextMeshProUGUI AuditoryEsotericsLabel;
-
     public GameObject[] Menus;
 
-    private enum MenuID
-    {
-        MessaHall,
-        MessaResults,
-        UpgradeShop,
-        PendingMessa,
-        CthulhuReport,
-        NewDay
-    }
+    [Header("Комментарий Ктулху")]
+    [SerializeField] private CthulhuSpeech cthulhuSpeech;
     public static Messa Instance;
 
     private void Awake()
     {
-        if (Instance != null && Instance != this)
-        {
-            Destroy(gameObject);
-            return;
-        }
         Instance = this;
         DontDestroyOnLoad(gameObject);
-
         sfxPlayer = GetComponent<PlaySoundsComponent>();
     }
     private void Start()
     {
         OpenMenu((int)MenuID.MessaHall);
         defaultAuditoryValues = (int[])auditory.Clone();
-        BooleanUpgrades.ApplyToStatic();
         UpdateUI();
     }
     private void OnEnable()
@@ -137,25 +117,41 @@ public class Messa : MonoBehaviour
     {
         return TotalCount(oldAdepts) + TotalCount(newAdepts);
     }
-    public int NewAdepts()
+    public string GetAdeptsChange()
     {
-        return TotalCount(newAdepts);
+        int delta = TotalAdepts() - oldAdeptsCount;
+        if (delta > 0) 
+        {
+            return $"+{delta}";
+        }
+        else if(delta < 0)
+        {
+            return $"{delta}";
+        }
+        else return "";
     }
-    public bool SpendMoney(float cost)
+    public void BuyUpgrade(int i)
+    {      
+        if (i >= UpgradeList.Length || Money < UpgradeList[i].Price) return;   
+        Money -= UpgradeList[i].Price;
+        UpgradeList[i].Unlocked = true;
+        Debug.Log($"Куплено улучшение: {UpgradeList[i].Header.ToLower()}");
+        Next();
+    }
+    public bool IsUnlocked(Upgrades upgrade)
     {
-        if (Money < cost) return false;
-        Money -= cost;
-        return true;
+        return UpgradeList[(int)upgrade].Unlocked;
     }
-    
     public void SpellSermon(int peopleClass)
     {
+        oldAdeptsCount = TotalCount(oldAdepts);
         int totalVisitors = TotalCount(auditory);
         if (totalVisitors == 0) return;
 
         float share = (float)auditory[peopleClass] / totalVisitors;
 
         float multiplier;
+        MessaResults messaResult = MessaResults.Excellent;
         bool isBad = false;
         bool isGoodOrBetter = false;
         bool isExcellent = false;
@@ -163,23 +159,29 @@ public class Messa : MonoBehaviour
         if (share < badThreshold)
         {
             multiplier = badMultiplier;
+            messaResult = MessaResults.Bad;
             isBad = true;
         }
         else if (share < goodThreshold)
         {
             multiplier = normalMultiplier;
+            messaResult = MessaResults.Good;
         }
         else if (share < excellentThreshold)
         {
             multiplier = goodMultiplier;
+            messaResult = MessaResults.Good;
             isGoodOrBetter = true;
         }
         else
         {
             multiplier = excellentMultiplier;
+            messaResult = MessaResults.Excellent;
             isGoodOrBetter = true;
             isExcellent = true;
         }
+        cthulhuSpeech?.SetSpeech(messaResult);
+
         float esotericBonus = Mathf.Min(auditory[4] * esotericBonusPerUnit, esotericBonusCap);
 
         int[] adeptsBefore = (int[])oldAdepts.Clone();
@@ -192,16 +194,16 @@ public class Messa : MonoBehaviour
             {
                 float chance = baseConversion[i] * multiplier;
 
-                if (Upgrades.HasCookie && i == 1) chance += cookieBonus;
+                if (IsUnlocked(Upgrades.CookiesAfterMessa) && i == 1) chance += cookieBonus;
 
-                if (Upgrades.HasAltar)
+                if (IsUnlocked(Upgrades.BeautifulAltar))
                 {
                     if (isExcellent) chance += altarExcellentBonus;
                     else if (isGoodOrBetter) chance += altarGoodBonus;
                 }
                 chance += esotericBonus;
 
-                if (Upgrades.HasPremiumFlyer) chance += premiumFlyerBonus;
+                if (IsUnlocked(Upgrades.PremiumFlyer)) chance += premiumFlyerBonus;
                 chance = Mathf.Min(chance, maxConversionChance);
 
                 if (Random.value <= chance) newConverted[i]++;
@@ -215,7 +217,7 @@ public class Messa : MonoBehaviour
             float churn = baseChurn - auditory[2] * pensionerChurnReduce;
             churn = Mathf.Max(churn, minChurn);
 
-            if (Upgrades.HasChoir) churn *= choirMultiplier;
+            if (IsUnlocked(Upgrades.Choir)) churn *= choirMultiplier;
 
             for (int i = 0; i < 5; i++)
             {
@@ -231,18 +233,18 @@ public class Messa : MonoBehaviour
         for (int i = 0; i < 5; i++)
         {
             float income = baseIncome[i] * auditory[i];
-            if (Upgrades.HasPremiumFlyer) income *= premiumIncomeMultiplier;
+            if (IsUnlocked(Upgrades.PremiumFlyer)) income *= premiumIncomeMultiplier;
             visitorIncome += income;
         }
         float oldAdeptIncome = totalAdeptsBefore * oldAdeptIncomeMultiplier;
 
-        float frontRow = Upgrades.HasPaidFrontRow ? auditory[0] * paidFrontRowBonus : 0f;
+        float frontRow = IsUnlocked(Upgrades.PaidFrontRow) ? auditory[0] * paidFrontRowBonus : 0f;
 
         DailyIncome = visitorIncome + oldAdeptIncome + frontRow;
 
-        if (Upgrades.HasCandles && isGoodOrBetter) DailyIncome *= candlesMultiplier;
+        if (IsUnlocked(Upgrades.PremiumCandles) && isGoodOrBetter) DailyIncome *= candlesMultiplier;
 
-        if (Upgrades.IsDayFive) DailyIncome *= auditMultiplier;
+        if ((CurrentDay - 1) % 7 == 4) DailyIncome *= auditMultiplier;
 
         Money += DailyIncome;
         TotalIncome += DailyIncome;
@@ -251,12 +253,12 @@ public class Messa : MonoBehaviour
 
         StartCoroutine(MessaCoroutine());
     }
-    
     private IEnumerator MessaCoroutine()
     {
         OpenMenu(MenuID.PendingMessa);
         sfxPlayer?.Play("");    
         yield return new WaitForSeconds(messaDuration);
+        UpdateUI();
         OpenMenu(MenuID.MessaResults);
     }
     public void Next()
@@ -268,11 +270,14 @@ public class Messa : MonoBehaviour
         }
         else if (Menus[(int)MenuID.MessaResults].activeSelf)
         {
-            OpenMenu(MenuID.CthulhuReport);
-        }
-        else if (Menus[(int)MenuID.CthulhuReport].activeSelf)
-        {
-            if (CurrentDay <= 4) OpenMenu(MenuID.UpgradeShop);
+            if (CurrentDay <= 4)
+            {
+                int j = (CurrentDay - 1) * 3;
+                OpenMenu(MenuID.UpgradeShop);
+                upgradePanel1.BindUpgrade(j);
+                upgradePanel2.BindUpgrade(j + 1);
+                upgradePanel3.BindUpgrade(j + 2);
+            } 
             else OpenMenu(MenuID.NewDay);
         }
         else if (Menus[(int)MenuID.UpgradeShop].activeSelf)
@@ -286,7 +291,6 @@ public class Messa : MonoBehaviour
         OpenMenu(MenuID.MessaHall);
         InitiateAdepts();
         auditory = (int[])defaultAuditoryValues.Clone();
-        Upgrades.IsDayFive = CurrentDay % 7 == 4;
         CurrentDay++;
         UpdateUI();
     }
@@ -303,18 +307,10 @@ public class Messa : MonoBehaviour
     {
         DayLabel?.SetText($"День: {CurrentDay}");
         MoneyLabel?.SetText($"${(int)Money}");
-
         OldAdeptsCountLabel?.SetText($"Старые адепты: {TotalCount(oldAdepts)}");
-        NewAdeptsCountLabel?.SetText($"Новые адепты: {TotalCount(newAdepts)}");
-
-        AdeptWorkersLabel?.SetText($"Рабочие: {oldAdepts[0]}");
-        AdeptStudentsLabel?.SetText($"Студенты: {oldAdepts[1]}");
-        AdeptPensionersLabel?.SetText($"Пенсионеры: {oldAdepts[2]}");
-        AdeptBloggersLabel?.SetText($"Блогеры: {oldAdepts[3]}");
-        AdeptEsotericsLabel?.SetText($"Эзотерики: {oldAdepts[4]}");
 
         AuditoryCountLabel?.SetText($"Аудитория: {TotalCount(auditory)}");
-        AuditoryWorkersLabel?.SetText($"Рабочие: {auditory[0]}");
+        AuditoryWorkersLabel?.SetText($"Офисники: {auditory[0]}");
         AuditoryStudentsLabel?.SetText($"Студенты: {auditory[1]}");
         AuditoryPensionersLabel?.SetText($"Пенсионеры: {auditory[2]}");
         AuditoryBloggersLabel?.SetText($"Блогеры: {auditory[3]}");

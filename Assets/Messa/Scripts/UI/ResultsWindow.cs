@@ -1,18 +1,24 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
+using TMPro;
 
-public class NewBehaviourScript : MonoBehaviour
+public class ResultsWindow : MonoBehaviour
 {
-    // Start is called before the first frame update
-    void Start()
-    {
-        
-    }
+    [SerializeField] private TextMeshProUGUI TotalAdeptsLabel;
+    [SerializeField] private TextMeshProUGUI NewAdeptsLabel;
+    [SerializeField] private TextMeshProUGUI DailyIncomeLabel;
 
-    // Update is called once per frame
-    void Update()
+    private void Start()
+    {  
+        TotalAdeptsLabel?.SetText($"Адептов всего: {Messa.Instance.TotalAdepts()}");
+        NewAdeptsLabel?.SetText(Messa.Instance.GetAdeptsChange());
+        DailyIncomeLabel?.SetText($"${(int)Messa.Instance.DailyIncome}");
+    }
+    private void OnEnable()
     {
-        
+        try
+        {
+            Start();
+        }
+        catch { }
     }
 }
