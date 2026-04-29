@@ -1,25 +1,17 @@
-using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 
 public class Blogger : Human
 {
     [SerializeField] private ListReactions listR;
-    [SerializeField] private float speed;
+    [SerializeField] private float speed = 2f;
 
-    protected override void Awake()
-    {
-        base.Awake();
-    }
     protected override string[] GetReactions()
     {
-        return listR.NeedBlogger;
+        return listR != null ? listR.NeedBlogger : null;
     }
+
     private void Update()
     {
-        float x = Time.deltaTime * speed;
-        Vector2 movement = new Vector2(-x, 0);
-        transform.Translate(movement);
+        MoveHuman(speed);
     }
 }
