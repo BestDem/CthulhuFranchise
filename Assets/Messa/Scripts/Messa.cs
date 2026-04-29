@@ -129,7 +129,7 @@ public class Messa : MonoBehaviour
     }
     public string GetAdeptsOutflow()
     {
-        int outflow = GetTotalAdeptsCount() - oldAdeptsCount;
+        int outflow = TotalCount(OldAdepts) - oldAdeptsCount;
         return outflow == 0 ? $"Нет оттока" : $"{outflow}";
     }
     public void BuyUpgrade(int i)
@@ -138,6 +138,7 @@ public class Messa : MonoBehaviour
         Money -= UpgradeList[i].Price;
         UpgradeList[i].Unlocked = true;
         Debug.Log($"Куплено улучшение: {UpgradeList[i].Header.ToLower()}");
+        sfxPlayer.Play("Покупка");
         Next();
     }
     public bool IsUnlocked(Upgrades upgrade)
@@ -246,11 +247,13 @@ public class Messa : MonoBehaviour
     }
     private IEnumerator MessaCoroutine()
     {
+        sfxPlayer.Play("Месса");
         OpenMenu(MenuID.PendingMessa);
         sfxPlayer?.Play("");    
         yield return new WaitForSeconds(messaDuration);
-        UpdateUI();
+        UpdateUI();      
         OpenMenu(MenuID.MessaResults);
+        sfxPlayer.Stop();
     }
     public void Next()
     {
@@ -259,12 +262,14 @@ public class Messa : MonoBehaviour
         {
             StopAllCoroutines();
             OpenMenu(MenuID.MessaResults);
+            sfxPlayer.Stop();
         }
         else if (Menus[(int)MenuID.MessaResults].activeSelf)
         {
             if (CurrentDay <= 4)
             {
                 int j = (CurrentDay - 1) * 3;
+                Debug.Log(j);
                 OpenMenu(MenuID.UpgradeShop);
                 UpgradePanel1.BindUpgrade(j);
                 UpgradePanel2.BindUpgrade(j + 1);
@@ -293,7 +298,7 @@ public class Messa : MonoBehaviour
     }
     public void UpdateUI()
     {
-        DayLabel?.SetText($"День: {CurrentDay}");
+        DayLabel?.SetText($"{CurrentDay}");
         MoneyLabel?.SetText($"${(int)Money}");
         OldAdeptsCountLabel?.SetText($"Старые адепты: {TotalCount(OldAdepts)}");
 

@@ -22,6 +22,8 @@ public class PlaySoundsComponent : MonoBehaviour
             }           
         }
     }
+    public void Stop() => source.Stop();
+
     [Serializable]
     public class AudioData
     {

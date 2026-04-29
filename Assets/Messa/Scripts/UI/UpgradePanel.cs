@@ -19,6 +19,7 @@ public class UpgradePanel : MonoBehaviour
         description.SetText(upgrade.Description);
         priceLabel.SetText($"Купить за ${upgrade.Price}");
         icon.sprite = upgrade.Icon;
+        buyButton.onClick.RemoveAllListeners();
         buyButton.onClick.AddListener(() => Messa.Instance.BuyUpgrade(i));
     }
 }
