@@ -13,13 +13,13 @@ public class DeleteHumanTrigger : MonoBehaviour
         {
             spawnHuman.DeleteHuman(other.gameObject);
             other.TryGetComponent(out Human human);
-            int i = 0;
-            if(human.reactionState == 1)
-            {
-                i = Random.Range(0, 2);
-                counterHuman.AddHuman(1, human.name);
-            }
-            else if(human.reactionState == 2)
+            //int i = 0;
+            //if(human.reactionState == 1)
+            //{
+            //    i = Random.Range(0, 2);
+            //    counterHuman.AddHuman(1, human.name);
+            //}
+            if(human.reactionState == 2)
             {
                 counterHuman.AddHuman(human.reactionState, human.name);
             }

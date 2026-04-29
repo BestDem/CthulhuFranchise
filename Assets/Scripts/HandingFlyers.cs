@@ -1,12 +1,22 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class HandingFlyers : MonoBehaviour
 {
+    public static HandingFlyers singltoneFlyer {get; private set;}
+    [SerializeField] private Text suspicionText;
     [SerializeField] private int radiusMegafon = 2;
     [SerializeField] private LayerMask layer;
+    [SerializeField] private ListReactions listReactions;
     private bool isMegafon = false;
+    public bool isPolice = false;
+    private float currentSuspicion = 0;
+    private void Start()
+    {
+        singltoneFlyer = this;
+    }
     void Update()
     {
         if(Input.GetMouseButtonDown(0))
@@ -20,6 +30,8 @@ public class HandingFlyers : MonoBehaviour
                 if(hit.transform.GetComponent<Human>() && FlyersController.singltoneFlyers.CurrentFlyer() != "")
                 {
                     hit.transform.TryGetComponent<Human>(out Human human);
+                    if(isPolice)
+                        CheakPolice(human);
                     human.emotion[0].SetActive(false);
                     human.SetReaction(FlyersController.singltoneFlyers.CurrentFlyer());
                     FlyersController.singltoneFlyers.DeletFlyer();
@@ -40,10 +52,48 @@ public class HandingFlyers : MonoBehaviour
             hitM.transform.TryGetComponent<Human>(out Human humanM);
             if(human.name == humanM.name)
             {
+                if(isPolice)
+                    CheakPolice(humanM);
                 humanM.emotion[0].SetActive(false);
                 humanM.SetReaction(FlyersController.singltoneFlyers.CurrentFlyer());
                 FlyersController.singltoneFlyers.DeletFlyer();
             }
+        }
+    }
+
+    private void CheakPolice(Human human)
+    {
+        if(human.name == FlyersController.singltoneFlyers.CurrentFlyer())
+        {
+            string d = human.name;
+            switch(d)
+            {
+                case "worker":
+                    currentSuspicion += listReactions.Suspicion[0];
+                    suspicionText.text = currentSuspicion.ToString();
+                    break;
+                case "student":
+                    currentSuspicion += listReactions.Suspicion[1];
+                    suspicionText.text = currentSuspicion.ToString();
+                    break;
+                case "retiree":
+                    currentSuspicion += listReactions.Suspicion[2];
+                    suspicionText.text = currentSuspicion.ToString();
+                    break;
+                case "blogger":
+                    currentSuspicion += listReactions.Suspicion[3];
+                    suspicionText.text = currentSuspicion.ToString();
+                    break;
+                case "esoteric":
+                    currentSuspicion += listReactions.Suspicion[4];
+                    suspicionText.text = currentSuspicion.ToString();
+                    break;
+            }
+        }
+        else
+        {
+            currentSuspicion += listReactions.Suspicion[5];
+            suspicionText.text = currentSuspicion.ToString();
         }
     }
 }

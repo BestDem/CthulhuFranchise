@@ -5,7 +5,7 @@ using UnityEngine;
 public class SpawnHuman : MonoBehaviour
 {
     [SerializeField] private Transform spawnpoint;
-    [SerializeField] private GameObject[] human; //0-worker 1-student 2-blogger 3-esoteric 4-retiree
+    [SerializeField] private GameObject[] human; //0-worker 1-student 2-blogger 3-esoteric 4-retiree 5-police
     [SerializeField] private ListReactions listReactions;
     private Dictionary<string, int> nameToIndex = new Dictionary<string, int>()
     {
@@ -20,6 +20,7 @@ public class SpawnHuman : MonoBehaviour
     private bool canSpawn = true;
     private int len;
     private float timerSpawnHuman = 0;
+    private float timerPolice = 7;
     private float frequencySpawn = 0;
     private int currentDay = 0;
     private void Start()
@@ -59,6 +60,16 @@ public class SpawnHuman : MonoBehaviour
                 GameObject prefab = GetRandomHumanByWeight();
                 GameObject h = Instantiate(prefab, spawnpoint);
                 spawnedHuman.Add(h);
+            }
+            if(currentDay > 0)
+            {
+                timerPolice -= Time.deltaTime;
+                if(timerPolice < 0)
+                {
+                    timerPolice = 7;
+                    GameObject h = Instantiate(human[5], spawnpoint);
+                    spawnedHuman.Add(h);
+                }
             }
         }
     }

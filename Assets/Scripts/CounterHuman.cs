@@ -18,7 +18,7 @@ public class CounterHuman : MonoBehaviour
                 countRecruit[name] = value + 1;
             else
                 countRecruit.Add(name, 1);
-            Debug.Log(countRecruit[name]+ name);
+            Debug.Log("Количество: " + countRecruit[name] + " людей группы: " +  name);
             //countRecruit.Add(name, 1);
         }
     }

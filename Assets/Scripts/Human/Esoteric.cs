@@ -1,15 +1,19 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 public class Esoteric : Human
 {
     [SerializeField] private ListReactions listR;
     [SerializeField] private float speed;
-
-    private void Start()
+    protected override void Awake()
     {
-        needReaction = listR.NeedEsoteric;
+        base.Awake();
+    }
+    protected override string[] GetReactions()
+    {
+        return listR.NeedEsoteric;
     }
     private void Update()
     {
