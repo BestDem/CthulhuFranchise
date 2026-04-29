@@ -6,7 +6,8 @@ using UnityEngine.UI;
 public class FlyersController : MonoBehaviour
 {
     public static FlyersController singltoneFlyers {get; private set;}
-    [SerializeField] private Text textCurrentFlyer;
+    [SerializeField] private Image currentFlyerIm;
+    [SerializeField] private Sprite nullImage;
     private string currentFlyer;
     private void Start()
     {
@@ -19,12 +20,15 @@ public class FlyersController : MonoBehaviour
     public void DeletFlyer()
     {
         currentFlyer = "";
-        textCurrentFlyer.text = "";
+        currentFlyerIm.sprite = nullImage;
     }
 
     public void OnButtonSetFlyer(string nameFlyer)
     {
         currentFlyer = nameFlyer;
-        textCurrentFlyer.text = nameFlyer;
+    }
+    public void OnButtonSprite(Sprite im)
+    {
+        currentFlyerIm.sprite = im;
     }
 }

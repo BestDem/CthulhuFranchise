@@ -6,12 +6,14 @@ public class Retiree : Human
 {
     [SerializeField] private ListReactions listR;
     [SerializeField] private float speed;
-
-    private void Awake()
+    protected override void Awake()
     {
-        needReaction = listR.NeedRetiree;
+        base.Awake();
     }
-    private void Update()
+    protected override string[] GetReactions()
+    {
+        return listR.NeedRetiree;
+    }    private void Update()
     {
         float x = Time.deltaTime * speed;
         Vector2 movement = new Vector2(-x, 0);

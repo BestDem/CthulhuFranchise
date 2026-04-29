@@ -6,9 +6,13 @@ public class Worker : Human
 {
     [SerializeField] private ListReactions listR;
     [SerializeField] private float speed;
-    private void Awake()
+    protected override void Awake()
     {
-        needReaction = listR.NeedWorker;
+        base.Awake();
+    }
+    protected override string[] GetReactions()
+    {
+        return listR.NeedWorker;
     }
     private void Update()
     {
