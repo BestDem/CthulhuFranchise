@@ -4,13 +4,6 @@ public enum MenuID
     MessaResults,
     UpgradeShop,
     PendingMessa,
-    NewDay
-}
-public enum MessaResults
-{
-    Bad,
-    Good,
-    Excellent
 }
 public enum Upgrades
 {
