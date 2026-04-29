@@ -15,11 +15,13 @@ public abstract class Human : MonoBehaviour
     protected virtual void Awake()
     {
         needReaction = GetReactions();
+        Debug.Log(needReaction[0]);
     }
     public void SetReaction(string reaction)
     {
         if(interact)
         {
+            
             interact = false;
             if(reaction == needReaction[0])
             {
@@ -34,7 +36,6 @@ public abstract class Human : MonoBehaviour
             {
                 reactionState = 1;
             }
-            Debug.Log(needReaction[0] + reaction);
             emotion[reactionState].SetActive(true);
         }
     }
