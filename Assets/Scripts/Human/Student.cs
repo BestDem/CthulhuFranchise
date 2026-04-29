@@ -1,22 +1,17 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 public class Student : Human
 {
     [SerializeField] private ListReactions listR;
-    [SerializeField] private float speed;
-    protected override void Awake()
-    {
-        base.Awake();
-    }
+    [SerializeField] private float speed = 2f;
+
     protected override string[] GetReactions()
     {
-        return listR.NeedStudent;
-    }    private void Update()
+        return listR != null ? listR.NeedStudent : null;
+    }
+
+    private void Update()
     {
-        float x = Time.deltaTime * speed;
-        Vector2 movement = new Vector2(-x, 0);
-        transform.Translate(movement);
+        MoveHuman(speed);
     }
 }

@@ -87,7 +87,6 @@ public class Messa : MonoBehaviour
     public TextMeshProUGUI AuditoryEsotericsLabel;
     public GameObject[] Menus;
     public static Messa Instance;
-
     private void Awake()
     {
         Instance = this;
@@ -109,7 +108,7 @@ public class Messa : MonoBehaviour
         for (int i = 0; i < Menus.Length; i++) Menus[i]?.SetActive(i == (int)menuID);
         StatsPanel.SetActive(menuID != MenuID.PendingMessa);
     }
-    private int TotalCount(int[] array)
+    public int TotalCount(int[] array)
     {
         int count = 0;
         foreach (int i in array) count += i;
@@ -283,9 +282,14 @@ public class Messa : MonoBehaviour
     {
         OpenMenu(MenuID.MessaHall);
         InitiateAdepts();
+
         Auditory = (int[])defaultAuditoryValues.Clone();
         CurrentDay++;
+
         UpdateUI();
+
+        if (GameSessionBridge.Instance != null) GameSessionBridge.Instance.OpenStreet();
+
     }
     private void InitiateAdepts()
     {
@@ -308,5 +312,34 @@ public class Messa : MonoBehaviour
         AuditoryPensionersLabel?.SetText($"Пенсионеры: {Auditory[2]}");
         AuditoryBloggersLabel?.SetText($"Блогеры: {Auditory[3]}");
         AuditoryEsotericsLabel?.SetText($"Эзотерики: {Auditory[4]}");    
+    }
+    public void InitiateFromBridge(int adepts)
+    {
+        for (int i = 0; i < OldAdepts.Length; i++)
+            OldAdepts[i] = adepts;
+    }
+    public void AddAdepts(int value)
+    {
+        if (value == 0) return;
+
+        if (value > 0)
+        {
+            int perType = Mathf.Max(1, value / NewAdepts.Length);
+
+            for (int i = 0; i < NewAdepts.Length; i++)
+                NewAdepts[i] += perType;
+        }
+        else
+        {
+            int remaining = -value;
+            int perType = Mathf.Max(1, remaining / OldAdepts.Length);
+
+            for (int i = 0; i < OldAdepts.Length; i++)
+            {
+                OldAdepts[i] -= perType;
+                if (OldAdepts[i] < 0)
+                    OldAdepts[i] = 0;
+            }
+        }
     }
 }
