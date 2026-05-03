@@ -14,9 +14,12 @@ public class CultistFlyerThrower : MonoBehaviour
     [Tooltip("Включи true, если в анимации броска стоят события Anim_SpawnFlyerInHand, Anim_ReleaseFlyer, Anim_FinishThrow.")]
     [SerializeField] private bool useAnimationEvents = true;
 
-    [Header("Fallback timing if Animation Events are OFF")]
+    [Header("Safety / fallback")]
+    [Tooltip("Если Animation Event Release/Finish не сработал, скрипт сам выпустит листовку и очистит состояние, чтобы очередь броска не зависала.")]
+    [SerializeField] private bool useSafetyFallback = true;
     [SerializeField] private float releaseDelay = 0.25f;
     [SerializeField] private float throwDuration = 0.8f;
+    [SerializeField] private float maxThrowLockTime = 1.5f;
 
     [Header("Flyer")]
     [SerializeField] private Transform handPoint;
@@ -30,20 +33,23 @@ public class CultistFlyerThrower : MonoBehaviour
 
     private bool isThrowing;
     private bool flyerReleased;
+    private bool handFlyerSpawned;
     private Human pendingTarget;
     private string pendingFlyerId;
     private Action pendingOnHit;
-    private Coroutine fallbackRoutine;
+    private Coroutine safetyRoutine;
 
-    public bool IsThrowing
-    {
-        get { return isThrowing; }
-    }
+    public bool IsThrowing => isThrowing;
 
     private void Start()
     {
         ShowIdle();
         HideHandFlyer();
+    }
+
+    private void OnDisable()
+    {
+        ForceClearThrowState(true);
     }
 
     public void ThrowFlyerTo(Human target, string flyerId, Action onHit)
@@ -58,28 +64,49 @@ public class CultistFlyerThrower : MonoBehaviour
         pendingFlyerId = flyerId;
         pendingOnHit = onHit;
         flyerReleased = false;
+        handFlyerSpawned = false;
         isThrowing = true;
 
         ShowThrow();
 
         if (!useAnimationEvents)
         {
-            fallbackRoutine = StartCoroutine(FallbackThrowRoutine());
+            safetyRoutine = StartCoroutine(TimedThrowRoutine(false));
+        }
+        else if (useSafetyFallback)
+        {
+            safetyRoutine = StartCoroutine(TimedThrowRoutine(true));
         }
     }
 
-    private IEnumerator FallbackThrowRoutine()
+    private IEnumerator TimedThrowRoutine(bool onlyIfEventsMissing)
     {
-        Anim_SpawnFlyerInHand();
+        if (!onlyIfEventsMissing)
+            Anim_SpawnFlyerInHand();
 
-        yield return new WaitForSeconds(releaseDelay);
+        yield return new WaitForSeconds(Mathf.Max(0f, releaseDelay));
 
-        Anim_ReleaseFlyer();
+        if (isThrowing && !flyerReleased)
+        {
+            if (onlyIfEventsMissing)
+                Debug.LogWarning("CultistFlyerThrower: Animation Event Anim_ReleaseFlyer не сработал. Выпускаю листовку через fallback.");
 
-        float remainingTime = Mathf.Max(0f, throwDuration - releaseDelay);
-        yield return new WaitForSeconds(remainingTime);
+            Anim_ReleaseFlyer();
+        }
 
-        Anim_FinishThrow();
+        float safeFinishTime = onlyIfEventsMissing
+            ? Mathf.Max(0.05f, maxThrowLockTime - releaseDelay)
+            : Mathf.Max(0f, throwDuration - releaseDelay);
+
+        yield return new WaitForSeconds(safeFinishTime);
+
+        if (isThrowing)
+        {
+            if (onlyIfEventsMissing)
+                Debug.LogWarning("CultistFlyerThrower: Animation Event Anim_FinishThrow не сработал. Очищаю очередь броска через fallback.");
+
+            Anim_FinishThrow();
+        }
     }
 
     // Animation Event: поставить в начале броска, когда листовка должна появиться в руке.
@@ -88,6 +115,7 @@ public class CultistFlyerThrower : MonoBehaviour
         if (!isThrowing)
             return;
 
+        handFlyerSpawned = true;
         ShowHandFlyer(pendingFlyerId);
     }
 
@@ -110,11 +138,27 @@ public class CultistFlyerThrower : MonoBehaviour
         if (!isThrowing)
             return;
 
-        if (fallbackRoutine != null)
+        // Если забыли поставить Release Event, не оставляем прохожего в состоянии ожидания попадания.
+        if (!flyerReleased)
         {
-            StopCoroutine(fallbackRoutine);
-            fallbackRoutine = null;
+            Debug.LogWarning("CultistFlyerThrower: бросок завершился без Release. Отменяю бронь цели, чтобы игра не зависала.");
+            if (pendingTarget != null)
+                pendingTarget.CancelFlyerReservation();
         }
+
+        ForceClearThrowState(false);
+    }
+
+    public void ForceClearThrowState(bool cancelPendingTarget)
+    {
+        if (safetyRoutine != null)
+        {
+            StopCoroutine(safetyRoutine);
+            safetyRoutine = null;
+        }
+
+        if (cancelPendingTarget && pendingTarget != null && !flyerReleased)
+            pendingTarget.CancelFlyerReservation();
 
         ShowIdle();
         HideHandFlyer();
@@ -123,6 +167,7 @@ public class CultistFlyerThrower : MonoBehaviour
         pendingFlyerId = null;
         pendingOnHit = null;
         flyerReleased = false;
+        handFlyerSpawned = false;
         isThrowing = false;
     }
 
@@ -171,19 +216,19 @@ public class CultistFlyerThrower : MonoBehaviour
         HideHandFlyer();
 
         if (target == null)
+        {
+            onHit?.Invoke();
             return;
+        }
 
         if (sharedFlyingFlyerPrefab == null)
         {
             Sprite bubbleSprite = flyerVisualDatabase != null ? flyerVisualDatabase.GetBubbleSprite(flyerId) : null;
             target.ReceiveFlyer(flyerId, bubbleSprite);
 
-            if (faceHitSound != null)
-                AudioSource.PlayClipAtPoint(faceHitSound, target.GetFacePosition());
+            FlyingFlyer.Play2DSound(faceHitSound);
 
-            if (onHit != null)
-                onHit.Invoke();
-
+            onHit?.Invoke();
             return;
         }
 

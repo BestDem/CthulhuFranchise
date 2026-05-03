@@ -1,8 +1,15 @@
 using UnityEngine;
 
+[RequireComponent(typeof(Collider2D))]
 public class StreetExitTrigger : MonoBehaviour
 {
     [SerializeField] private SpawnHuman spawnHuman;
+
+    private void Awake()
+    {
+        Collider2D col = GetComponent<Collider2D>();
+        col.isTrigger = true;
+    }
 
     private void OnTriggerEnter2D(Collider2D other)
     {
@@ -12,33 +19,23 @@ public class StreetExitTrigger : MonoBehaviour
 
         if (human != null)
         {
-            DeleteObject(human.gameObject);
+            if (spawnHuman != null)
+                spawnHuman.DeleteHuman(human.gameObject);
+            else
+                Destroy(human.gameObject);
             return;
         }
 
-        PoliceController policeController = other.GetComponent<PoliceController>();
-        if (policeController == null)
-            policeController = other.GetComponentInParent<PoliceController>();
+        PoliceController police = other.GetComponent<PoliceController>();
+        if (police == null)
+            police = other.GetComponentInParent<PoliceController>();
 
-        PolicePatrol policePatrol = other.GetComponent<PolicePatrol>();
-        if (policePatrol == null)
-            policePatrol = other.GetComponentInParent<PolicePatrol>();
-
-        if (policeController != null || policePatrol != null)
+        if (police != null)
         {
-            GameObject policeRoot = policeController != null ? policeController.gameObject : policePatrol.gameObject;
-            DeleteObject(policeRoot);
+            if (spawnHuman != null)
+                spawnHuman.DeleteHuman(police.gameObject);
+            else
+                Destroy(police.gameObject);
         }
-    }
-
-    private void DeleteObject(GameObject target)
-    {
-        if (target == null)
-            return;
-
-        if (spawnHuman != null)
-            spawnHuman.DeleteHuman(target);
-        else
-            Destroy(target);
     }
 }

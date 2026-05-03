@@ -1,7 +1,6 @@
 using UnityEngine;
 
-// Старый триггер оставлен для совместимости.
-// Лучше использовать MessaDoorTrigger у двери и StreetExitTrigger в конце улицы.
+// Legacy trigger. Лучше использовать MessaDoorTrigger и StreetExitTrigger.
 public class DeleteHumanTrigger : MonoBehaviour
 {
     [SerializeField] private SpawnHuman spawnHuman;
@@ -13,15 +12,21 @@ public class DeleteHumanTrigger : MonoBehaviour
         if (human == null)
             human = other.GetComponentInParent<Human>();
 
-        if (human == null)
-            return;
+        if (human != null)
+        {
+            if (human.reactionState == 2)
+            {
+                if (GameSessionBridge.Instance != null)
+                    GameSessionBridge.Instance.AddVisitorToMessa(human.HumanType);
 
-        if (human.reactionState == 2 && counterHuman != null)
-            counterHuman.AddHuman(1, human.name);
+                if (counterHuman != null)
+                    counterHuman.AddHuman(1, human.HumanType);
+            }
 
-        if (spawnHuman != null)
-            spawnHuman.DeleteHuman(human.gameObject);
-        else
-            Destroy(human.gameObject);
+            if (spawnHuman != null)
+                spawnHuman.DeleteHuman(human.gameObject);
+            else
+                Destroy(human.gameObject);
+        }
     }
 }

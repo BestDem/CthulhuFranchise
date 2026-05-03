@@ -16,41 +16,54 @@ public class DayController : MonoBehaviour
     [SerializeField] private string dayPrefix = "День ";
     [SerializeField] private string finalText = "Финал";
 
+    // false = улица стартовала, true = день реально завершён и можно показывать итог.
     public static event Action<bool> dayEnd;
+
+    // Срабатывает, когда таймер дошёл до 0. Важно: итоговую панель сразу НЕ открываем.
+    // StreetDayFlowController после этого останавливает новый спавн и ждёт, пока текущие прохожие уйдут.
+    public static event Action timerExpired;
 
     private int currentDayIndex;
     private float timer;
-    private bool isDay;
+    private bool isDayRunning;
     private bool waitingForNextDay;
+    private bool timerExpiredAlready;
 
     public int CurrentDayNumber => currentDayIndex + 1;
+    public int CurrentDayIndex => currentDayIndex;
     public float CurrentTimer => timer;
-    public bool IsDay => isDay;
+    public bool IsDay => isDayRunning;
+    public bool WaitingForNextDay => waitingForNextDay;
     public string LastEndReason { get; private set; } = "День завершён";
 
     private void Start()
     {
         currentDayIndex = Mathf.Clamp(startDay - 1, 0, GetLastDayIndex());
-        StartCurrentDay(false);
+        timer = GetDayDuration(currentDayIndex);
+        isDayRunning = false;
+        waitingForNextDay = false;
+        timerExpiredAlready = false;
+        UpdateUI();
     }
 
     private void Update()
     {
-        if (!isDay)
+        if (!isDayRunning)
             return;
 
         timer -= Time.deltaTime;
 
         if (timer <= 0f)
         {
-            ForceEndDay("Время вышло");
+            timer = 0f;
+            UpdateTimerText();
+            ExpireTimer("Время вышло");
             return;
         }
 
         UpdateTimerText();
     }
 
-    // Можно повесить на кнопку "Следующий день".
     public void StartDay()
     {
         if (waitingForNextDay)
@@ -66,45 +79,81 @@ public class DayController : MonoBehaviour
             currentDayIndex++;
         }
 
-        StartCurrentDay(true);
+        StartCurrentDay();
+    }
+
+    public void StartDay(int dayNumber)
+    {
+        currentDayIndex = Mathf.Clamp(dayNumber - 1, 0, GetLastDayIndex());
+        StartCurrentDay();
     }
 
     public void SetDay(int dayNumber)
     {
         currentDayIndex = Mathf.Clamp(dayNumber - 1, 0, GetLastDayIndex());
-        StartCurrentDay(true);
+        timer = GetDayDuration(currentDayIndex);
+        isDayRunning = false;
+        waitingForNextDay = false;
+        timerExpiredAlready = false;
+        LastEndReason = "День подготовлен";
+        UpdateUI();
     }
 
     public void RestartCurrentDay()
     {
-        StartCurrentDay(true);
+        StartCurrentDay();
     }
 
-    public void ForceEndDay(string reason)
+    public void StopTimerOnly()
     {
-        if (!isDay && waitingForNextDay)
+        isDayRunning = false;
+        timer = 0f;
+        UpdateTimerText();
+    }
+
+    public void ExpireTimer(string reason)
+    {
+        if (timerExpiredAlready)
             return;
 
-        timer = 0f;
-        isDay = false;
+        isDayRunning = false;
+        timerExpiredAlready = true;
+        LastEndReason = string.IsNullOrEmpty(reason) ? "Время вышло" : reason;
+        Debug.Log("Таймер улицы закончился. Ждём, пока прохожие уйдут.");
+        timerExpired?.Invoke();
+    }
+
+    // Использовать для полиции/ручного завершения, когда день должен закончиться сразу.
+    public void ForceEndDay(string reason)
+    {
+        CompleteDay(reason);
+    }
+
+    // Вызывать, когда реально можно открыть итоговую панель.
+    public void CompleteDay(string reason)
+    {
+        isDayRunning = false;
         waitingForNextDay = true;
+        timerExpiredAlready = false;
+        timer = 0f;
         LastEndReason = string.IsNullOrEmpty(reason) ? "День завершён" : reason;
         UpdateUI();
 
-        Debug.Log("День закончен: " + CurrentDayNumber + " | Причина: " + LastEndReason);
+        Debug.Log("День завершён: " + CurrentDayNumber + " | Причина: " + LastEndReason);
         dayEnd?.Invoke(true);
     }
 
-    private void StartCurrentDay(bool notifySystems)
+    private void StartCurrentDay()
     {
         timer = GetDayDuration(currentDayIndex);
-        isDay = true;
+        isDayRunning = true;
         waitingForNextDay = false;
-        LastEndReason = "День завершён";
+        timerExpiredAlready = false;
+        LastEndReason = "День идёт";
         UpdateUI();
 
-        if (notifySystems)
-            dayEnd?.Invoke(false);
+        Debug.Log("Старт улицы. День: " + CurrentDayNumber);
+        dayEnd?.Invoke(false);
     }
 
     private int GetLastDayIndex()
@@ -115,10 +164,15 @@ public class DayController : MonoBehaviour
         return listReactions.LenDaySec.Length - 1;
     }
 
+    public int GetDayDurationByNumber(int dayNumber)
+    {
+        return GetDayDuration(Mathf.Clamp(dayNumber - 1, 0, GetLastDayIndex()));
+    }
+
     private int GetDayDuration(int index)
     {
-        if (listReactions == null || listReactions.LenDaySec == null || listReactions.LenDaySec.Length == 0)
-            return 30;
+        if (listReactions == null || listReactions.LenDaySec == null || listReactions.LenDaySec.Length == 0) return 60;
+
 
         index = Mathf.Clamp(index, 0, listReactions.LenDaySec.Length - 1);
         return listReactions.LenDaySec[index];

@@ -6,7 +6,8 @@ public class ResultsWindow : MonoBehaviour
     [SerializeField] private TextMeshProUGUI DailyBaseIncomeLabel;
     [SerializeField] private TextMeshProUGUI DailyTotalIncomeLabel;
     [SerializeField] private TextMeshProUGUI newAdeptsLabel;
-    [SerializeField] private TextMeshProUGUI AdeptsOutflowLabel;     
+    [SerializeField] private TextMeshProUGUI AdeptsOutflowLabel;
+    [SerializeField] private TextMeshProUGUI FaithIncomeLabel;
     [SerializeField] private TextMeshProUGUI oldAdeptsCalculationLabel;
     [SerializeField] private TextMeshProUGUI oldAdeptsIncomeLabel;
 
@@ -37,6 +38,7 @@ public class ResultsWindow : MonoBehaviour
         {
             newAdeptsLabel?.SetText(Messa.Instance.GetNewAdeptsCount());
             AdeptsOutflowLabel?.SetText(Messa.Instance.GetAdeptsOutflow());
+            FaithIncomeLabel?.SetText($"{Messa.Instance.GetFaithIncome()}");
 
             if (Messa.Instance.IsUnlocked(Upgrades.PaidFrontRow))
             {
@@ -67,7 +69,7 @@ public class ResultsWindow : MonoBehaviour
             oldAdeptsCalculationLabel?.SetText($"{Messa.Instance.GetOldAdeptsCount()} * {Messa.Instance.OldAdeptIncomeMultiplier}");
             oldAdeptsIncomeLabel?.SetText($"${Messa.Instance.GetOldAdeptsCount() * Messa.Instance.OldAdeptIncomeMultiplier}");
             DailyBaseIncomeLabel?.SetText($"${(int)Messa.Instance.DailyBaseIncome}");
-            DailyTotalIncomeLabel?.SetText($"Итоговый доход: ${(int)Messa.Instance.DailyIncome}");
+            DailyTotalIncomeLabel?.SetText($"Итоговый доход: ${(int)Messa.Instance.DailyMoneyIncome}");
         }
         catch { }     
     }

@@ -93,13 +93,29 @@ public class FlyingFlyer : MonoBehaviour
             target.ReceiveFlyer(flyerId, bubbleSprite);
         }
 
-        if (hitSound != null)
-            AudioSource.PlayClipAtPoint(hitSound, facePosition);
+        Play2DSound(hitSound);
 
         if (onHit != null)
             onHit.Invoke();
 
         Destroy(gameObject, Mathf.Max(0.01f, faceStickTime));
+    }
+
+    public static void Play2DSound(AudioClip clip, float volume = 1f)
+    {
+        if (clip == null)
+            return;
+
+        GameObject audioObject = new GameObject("OneShot_2D_FlyerHitSound");
+        AudioSource source = audioObject.AddComponent<AudioSource>();
+        source.clip = clip;
+        source.volume = volume;
+        source.spatialBlend = 0f; // 0 = 2D звук, слышно на всей сцене одинаково
+        source.playOnAwake = false;
+        source.loop = false;
+        source.Play();
+
+        Destroy(audioObject, clip.length + 0.1f);
     }
 
     private Sprite GetFlyerSprite()

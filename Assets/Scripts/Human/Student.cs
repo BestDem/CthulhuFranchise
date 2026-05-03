@@ -3,11 +3,18 @@ using UnityEngine;
 public class Student : Human
 {
     [SerializeField] private ListReactions listR;
-    [SerializeField] private float speed = 2f;
+    [SerializeField] private float speed = 3.5f;
+
+    protected override void Awake()
+    {
+        SetHumanType("student");
+        name = "student";
+        base.Awake();
+    }
 
     protected override string[] GetReactions()
     {
-        return listR != null ? listR.NeedStudent : null;
+        return listR != null ? listR.NeedStudent : new string[] { "student2" };
     }
 
     private void Update()

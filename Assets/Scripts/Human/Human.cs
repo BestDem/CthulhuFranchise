@@ -3,86 +3,82 @@ using UnityEngine;
 
 public abstract class Human : MonoBehaviour
 {
+    [Header("Identity")]
+    [SerializeField] private string humanType = "worker";
     public string[] needReaction;
     protected abstract string[] GetReactions();
 
-    [Header("Old fields")]
+    [Header("Old public fields compatibility")]
     public GameObject background;
     public GameObject[] emotion;
     public string name;
-    public int reactionState; // 2 - придет на мессу, 1 - не придет
-    public bool interact = false;
+    public int reactionState; // 2 = придёт на мессу, 1 = не придёт
+    public bool interact = true;
 
-    [Header("Walk / Idle visual switch")]
-    [Tooltip("Объект с анимацией ходьбы. Включается, когда прохожий двигается.")]
+    [Header("Movement")]
     [SerializeField] private GameObject walkVisualObject;
-
-    [Tooltip("Картинка/анимация ожидания. Включается, когда прохожий остановлен после попадания листовки.")]
     [SerializeField] private GameObject idleVisualObject;
-
-    [Tooltip("Можно не заполнять. Если заполнено, скрипт включает/выключает bool параметр ходьбы.")]
     [SerializeField] private Animator walkAnimator;
-
     [SerializeField] private string walkingBoolName = "IsWalking";
 
-    [Header("SIMPLE direction flip")]
-    [Tooltip("Включить простой поворот персонажа по X.")]
+    [Header("Reaction Idle Visuals")]
+    [Tooltip("Поза/картинка персонажа при правильной листовке. Это НЕ смайлик, а визуал самого персонажа вместо обычного IdleVisual.")]
+    [SerializeField] private GameObject happyIdleVisualObject;
+    [Tooltip("Поза/картинка персонажа при неправильной листовке. Это НЕ смайлик, а визуал самого персонажа вместо обычного IdleVisual.")]
+    [SerializeField] private GameObject negativeIdleVisualObject;
+
+    [Header("Direction flip")]
     [SerializeField] private bool useSimpleDirectionFlip = true;
-
-    [Tooltip("Сюда перетащи ТОЛЬКО объект Run / объект анимации, который надо разворачивать по X. Скрипт меняет только знак Scale X у этого объекта.")]
     [SerializeField] private Transform visualRootToFlip;
-
-    [Tooltip("Если Scale X > 0 означает, что персонаж смотрит вправо, оставь true. Если наоборот — false.")]
     [SerializeField] private bool positiveScaleXFacingRight = true;
-
-    [Tooltip("Обычное движение по улице. Если прохожие идут справа налево, ставь -1. Если слева направо, ставь 1.")]
     [SerializeField] private float streetMoveDirectionX = -1f;
-
-    [Tooltip("Если включено, скрипт меняет ТОЛЬКО знак Scale X и не трогает Y/Z. Это убирает искажения.")]
     [SerializeField] private bool changeOnlyScaleXSign = true;
 
-    [Header("Flyer hit setup")]
+    [Header("Flyer hit")]
     [SerializeField] private Transform facePoint;
     [SerializeField] private SpriteRenderer bubbleFlyerIcon;
     [SerializeField] private float flyerInBubbleTime = 0.35f;
     [SerializeField] private float stopAfterHitTime = 0.35f;
 
     [Header("Messa door movement")]
-    [Tooltip("Необязательно. Если пусто, правильный прохожий пойдет к объекту MessaDoorPoint на сцене.")]
     [SerializeField] private Transform doorTargetOverride;
-
-    [Tooltip("ОТДЕЛЬНАЯ скорость движения к двери ТОЛЬКО ПО X. Если медленно — ставь 7-12.")]
     [SerializeField] private float messaDoorMoveSpeed = 7f;
-
-    [Tooltip("Когда X прохожего почти равен X двери, он считается вошедшим в мессу.")]
     [SerializeField] private float doorStopDistance = 0.05f;
 
     [Header("Police")]
     [SerializeField] private GameObject policeWarningIcon;
 
     private bool canMove = true;
-    private bool alreadyReceivedFlyer = false;
-    private bool waitingForFlyerHit = false;
-    private bool goingToMessa = false;
+    private bool alreadyReceivedFlyer;
+    private bool waitingForFlyerHit;
+    private bool goingToMessa;
     private Coroutine receiveFlyerCoroutine;
+    private Rigidbody2D cachedRigidbody2D;
 
-    private bool hasWantedFacing = false;
-    private bool wantedFaceRight = false;
+    private bool hasWantedFacing;
+    private bool wantedFaceRight;
     private float safeAbsScaleX = 1f;
+    private int currentIdleVisualState; // 0 = обычный idle, 1 = negative, 2 = happy
 
+    public string HumanType => string.IsNullOrEmpty(humanType) ? name : humanType;
     public bool IsGoingToMessa => goingToMessa;
     public bool AlreadyReceivedFlyer => alreadyReceivedFlyer;
     public bool IsInPoliceZone { get; private set; }
 
     protected virtual void Awake()
     {
+        cachedRigidbody2D = GetComponent<Rigidbody2D>();
         needReaction = GetReactions();
+
+        if (string.IsNullOrEmpty(humanType))
+            humanType = name;
 
         Transform flipTarget = GetFlipTarget();
         if (flipTarget != null)
             safeAbsScaleX = Mathf.Max(0.0001f, Mathf.Abs(flipTarget.localScale.x));
 
         HideBubbleFlyerIcon();
+        HideReactionIdleVisuals();
         SetPoliceZone(false);
         SetCanMove(true);
         FaceStreetDirection();
@@ -90,14 +86,17 @@ public abstract class Human : MonoBehaviour
 
     private void LateUpdate()
     {
-        // Важно: LateUpdate идет после Animator, поэтому анимация не перезатирает поворот.
         ApplyWantedFacing();
+    }
+
+    public void SetHumanType(string value)
+    {
+        humanType = value;
     }
 
     public void SetPoliceZone(bool value)
     {
         IsInPoliceZone = value;
-
         if (policeWarningIcon != null)
             policeWarningIcon.SetActive(value);
     }
@@ -115,14 +114,58 @@ public abstract class Human : MonoBehaviour
 
     private void UpdateWalkIdleVisual()
     {
-        if (walkVisualObject != null)
-            walkVisualObject.SetActive(canMove);
+        // Важно: нельзя оставить все визуалы выключенными.
+        // Если Happy/Negative не назначены, используем обычный Idle как fallback.
+        GameObject targetVisual;
 
-        if (idleVisualObject != null)
-            idleVisualObject.SetActive(!canMove);
+        if (canMove)
+        {
+            targetVisual = walkVisualObject != null ? walkVisualObject : idleVisualObject;
+        }
+        else
+        {
+            if (currentIdleVisualState == 2 && happyIdleVisualObject != null)
+                targetVisual = happyIdleVisualObject;
+            else if (currentIdleVisualState == 1 && negativeIdleVisualObject != null)
+                targetVisual = negativeIdleVisualObject;
+            else if (idleVisualObject != null)
+                targetVisual = idleVisualObject;
+            else
+                targetVisual = walkVisualObject;
+        }
+
+        SetVisualObject(walkVisualObject, targetVisual);
+        SetVisualObject(idleVisualObject, targetVisual);
+        SetVisualObject(happyIdleVisualObject, targetVisual);
+        SetVisualObject(negativeIdleVisualObject, targetVisual);
 
         if (walkAnimator != null && !string.IsNullOrEmpty(walkingBoolName))
             walkAnimator.SetBool(walkingBoolName, canMove);
+    }
+
+    private void SetVisualObject(GameObject visual, GameObject targetVisual)
+    {
+        if (visual == null)
+            return;
+
+        visual.SetActive(visual == targetVisual);
+    }
+
+    private void SetIdleVisualState(int state)
+    {
+        currentIdleVisualState = state;
+        UpdateWalkIdleVisual();
+    }
+
+    private void HideReactionIdleVisuals()
+    {
+        currentIdleVisualState = 0;
+
+        if (negativeIdleVisualObject != null)
+            negativeIdleVisualObject.SetActive(false);
+
+        if (happyIdleVisualObject != null)
+            happyIdleVisualObject.SetActive(false);
     }
 
     public bool CanReceiveFlyer()
@@ -140,15 +183,32 @@ public abstract class Human : MonoBehaviour
         if (!CanReceiveFlyer())
             return false;
 
+        // IMPORTANT: reserving target does NOT stop the NPC.
+        // The NPC keeps walking while the flyer is flying.
+        // Stop + Idle/Happy/Negative reaction happens only after FlyingFlyer hits FacePoint.
         waitingForFlyerHit = true;
         interact = false;
-        SetCanMove(false);
 
         if (background != null)
             background.SetActive(false);
 
         HideAllEmotions();
         return true;
+    }
+
+    public void CancelFlyerReservation()
+    {
+        if (alreadyReceivedFlyer)
+            return;
+
+        waitingForFlyerHit = false;
+        interact = true;
+        SetIdleVisualState(0);
+        SetCanMove(true);
+        FaceStreetDirection();
+
+        if (background != null)
+            background.SetActive(false);
     }
 
     public Vector3 GetFacePosition()
@@ -207,43 +267,65 @@ public abstract class Human : MonoBehaviour
         alreadyReceivedFlyer = true;
         waitingForFlyerHit = false;
         interact = false;
-        SetCanMove(false);
-
-        HideAllEmotions();
-        ShowBubbleFlyerIcon(bubbleSprite);
-
-        yield return new WaitForSeconds(flyerInBubbleTime);
-
-        HideBubbleFlyerIcon();
 
         bool isCorrectReaction = needReaction != null && needReaction.Length > 0 && reaction == needReaction[0];
 
+        // ВАЖНО: реакция включается МГНОВЕННО в момент попадания листовки в FacePoint.
+        // Раньше персонаж сначала показывал обычный idle/ещё мог выглядеть как Run,
+        // ждал flyerInBubbleTime и только потом включал Happy/Negative. Из-за этого было ощущение задержки.
+        StopPhysicsMotion();
+        HideAllEmotions();
+
         if (isCorrectReaction)
         {
-            gameObject.layer = 2; // Ignore Raycast: второй раз кинуть нельзя
+            gameObject.layer = 2; // Ignore Raycast, второй раз кинуть нельзя
             reactionState = 2;
             goingToMessa = true;
+            SetIdleVisualState(2); // радостная поза персонажа сразу
             FaceDoorDirection();
         }
         else
         {
             reactionState = 1;
             goingToMessa = false;
+            SetIdleVisualState(1); // негативная поза персонажа сразу
             FaceStreetDirection();
         }
 
-        if (needReaction != null && needReaction.Length > 0)
-            Debug.Log("Нужно: " + needReaction[0] + " | Дали: " + reaction + " | Результат: " + reactionState + " | В мессу: " + goingToMessa);
-        else
-            Debug.Log("У прохожего не настроен needReaction. Дали: " + reaction);
+        SetCanMove(false);
+        StopPhysicsMotion();
 
         if (emotion != null && reactionState >= 0 && reactionState < emotion.Length && emotion[reactionState] != null)
             emotion[reactionState].SetActive(true);
 
+        ShowBubbleFlyerIcon(bubbleSprite);
+
+        if (needReaction != null && needReaction.Length > 0)
+            Debug.Log("Тип: " + HumanType + " | Нужно: " + needReaction[0] + " | Дали: " + reaction + " | Результат: " + reactionState + " | В мессу: " + goingToMessa);
+        else
+            Debug.LogWarning("У прохожего не настроен needReaction. Дали: " + reaction);
+
+        yield return new WaitForSeconds(flyerInBubbleTime);
+
+        HideBubbleFlyerIcon();
+
         yield return new WaitForSeconds(stopAfterHitTime);
 
         SetCanMove(true);
+        SetIdleVisualState(0);
         receiveFlyerCoroutine = null;
+    }
+
+    private void StopPhysicsMotion()
+    {
+        if (cachedRigidbody2D == null)
+            cachedRigidbody2D = GetComponent<Rigidbody2D>();
+
+        if (cachedRigidbody2D != null)
+        {
+            cachedRigidbody2D.linearVelocity = Vector2.zero;
+            cachedRigidbody2D.angularVelocity = 0f;
+        }
     }
 
     protected void MoveHuman(float speed)
@@ -254,7 +336,6 @@ public abstract class Human : MonoBehaviour
         if (goingToMessa)
         {
             Transform doorTarget = GetDoorTarget();
-
             if (doorTarget != null)
             {
                 float targetX = doorTarget.position.x;
@@ -262,20 +343,12 @@ public abstract class Human : MonoBehaviour
 
                 FaceByDirectionX(directionX);
 
-                float newX = Mathf.MoveTowards(
-                    transform.position.x,
-                    targetX,
-                    messaDoorMoveSpeed * Time.deltaTime
-                );
-
-                // Важно: к двери идём ТОЛЬКО по X. Y/Z не трогаем, поэтому персонаж не ползёт вверх.
+                float newX = Mathf.MoveTowards(transform.position.x, targetX, messaDoorMoveSpeed * Time.deltaTime);
                 transform.position = new Vector3(newX, transform.position.y, transform.position.z);
 
-                // Дошёл по X до двери — сразу считаем, что он зашёл в мессу.
                 if (Mathf.Abs(targetX - transform.position.x) <= doorStopDistance)
                 {
                     SetCanMove(false);
-
                     if (MessaDoorTrigger.Current != null)
                         MessaDoorTrigger.Current.AcceptHuman(this);
                 }
@@ -295,15 +368,6 @@ public abstract class Human : MonoBehaviour
             return doorTargetOverride;
 
         return MessaDoorPoint.Current;
-    }
-
-    public bool IsNearDoor()
-    {
-        Transform doorTarget = GetDoorTarget();
-        if (doorTarget == null)
-            return false;
-
-        return Mathf.Abs(transform.position.x - doorTarget.position.x) <= doorStopDistance;
     }
 
     private void FaceDoorDirection()
@@ -342,47 +406,35 @@ public abstract class Human : MonoBehaviour
             return;
 
         Vector3 scale = target.localScale;
-
         float absX = Mathf.Abs(scale.x);
         if (absX < 0.0001f)
             absX = safeAbsScaleX;
 
         float sign = positiveScaleXFacingRight == wantedFaceRight ? 1f : -1f;
-
-        if (changeOnlyScaleXSign)
-        {
-            // Самый безопасный вариант: меняем только знак X, Y/Z не трогаем.
-            scale.x = absX * sign;
-            target.localScale = scale;
-        }
-        else
-        {
-            target.localScale = new Vector3(absX * sign, scale.y, scale.z);
-        }
+        scale.x = absX * sign;
+        target.localScale = scale;
     }
 
     private Transform GetFlipTarget()
     {
-        // Специально НЕ используем fallback на весь walkVisualObject/idleVisualObject.
-        // Чтобы не искажать картинки, скрипт меняет Scale X только у объекта, который ты явно перетащил сюда — обычно Run.
         return visualRootToFlip;
     }
 
-    private void ShowBubbleFlyerIcon(Sprite bubbleSprite)
+    private void ShowBubbleFlyerIcon(Sprite sprite)
     {
         if (bubbleFlyerIcon == null)
             return;
 
-        if (bubbleSprite != null)
-            bubbleFlyerIcon.sprite = bubbleSprite;
+        if (sprite != null)
+            bubbleFlyerIcon.sprite = sprite;
 
-        bubbleFlyerIcon.gameObject.SetActive(true);
+        bubbleFlyerIcon.enabled = true;
     }
 
     private void HideBubbleFlyerIcon()
     {
         if (bubbleFlyerIcon != null)
-            bubbleFlyerIcon.gameObject.SetActive(false);
+            bubbleFlyerIcon.enabled = false;
     }
 
     private void HideAllEmotions()

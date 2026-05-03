@@ -3,11 +3,18 @@ using UnityEngine;
 public class Blogger : Human
 {
     [SerializeField] private ListReactions listR;
-    [SerializeField] private float speed = 2f;
+    [SerializeField] private float speed = 3.8f;
+
+    protected override void Awake()
+    {
+        SetHumanType("blogger");
+        name = "blogger";
+        base.Awake();
+    }
 
     protected override string[] GetReactions()
     {
-        return listR != null ? listR.NeedBlogger : null;
+        return listR != null ? listR.NeedBlogger : new string[] { "blogger2" };
     }
 
     private void Update()

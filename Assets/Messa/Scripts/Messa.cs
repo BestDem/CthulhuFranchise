@@ -10,15 +10,15 @@ public class Messa : MonoBehaviour
     public float Money;   
     public float messaDuration = 3f;
 
-    [HideInInspector] public float TotalIncome;
-    [HideInInspector] public float DailyIncome;
+    [HideInInspector] public float TotalMoneyIncome;
+    [HideInInspector] public float DailyMoneyIncome;
     [HideInInspector] public int CurrentDay = 1;
 
-    public int[] Auditory = new int[5];
-    public int[] NewAdepts = new int[5];
-    public int[] OldAdepts = new int[5];
+    [HideInInspector] public int[] Auditory = new int[5];
+    [HideInInspector] public int[] NewAdepts = new int[5];
+    [HideInInspector] public int[] OldAdepts = new int[5];
+    
 
-    private int[] defaultAuditoryValues = new int[5];
     private PlaySoundsComponent sfxPlayer;
 
 
@@ -86,6 +86,9 @@ public class Messa : MonoBehaviour
     public TextMeshProUGUI AuditoryBloggersLabel;
     public TextMeshProUGUI AuditoryEsotericsLabel;
     public GameObject[] Menus;
+    [Header("Спрайты посетителей")]
+    [SerializeField] private GameObject[] VisitorSprites;
+  
     public static Messa Instance;
     private void Awake()
     {
@@ -95,18 +98,52 @@ public class Messa : MonoBehaviour
     }
     private void Start()
     {
-        OpenMenu((int)MenuID.MessaHall);
-        defaultAuditoryValues = (int[])Auditory.Clone();
-        UpdateUI();
+        LoadFromBridge();
     }
     private void OnEnable()
     {
-        Start();
+        LoadFromBridge();
     }
+    private void LoadFromBridge()
+    {    
+        if (GameSessionBridge.Instance == null) return;
+        var input = GameSessionBridge.Instance.GetMessaInput();
+
+        CurrentDay = input.currentDay;
+        Money = input.currentMoney;
+
+        Auditory[0] = input.officeVisitors;
+        Auditory[1] = input.studentVisitors;
+        Auditory[2] = input.retireeVisitors;
+        Auditory[3] = input.bloggerVisitors;
+        Auditory[4] = input.esotericVisitors;
+
+        OpenMenu((int)MenuID.MessaHall);
+        UpdateUI();
+    }
+    
     private void OpenMenu(MenuID menuID)
     {
         for (int i = 0; i < Menus.Length; i++) Menus[i]?.SetActive(i == (int)menuID);
         StatsPanel.SetActive(menuID != MenuID.PendingMessa);
+    }
+    public void UpdateUI()
+    {
+        DayLabel?.SetText($"{CurrentDay}");
+        MoneyLabel?.SetText($"${(int)Money}");
+        OldAdeptsCountLabel?.SetText($"Старые адепты: {TotalCount(OldAdepts)}");
+
+        AuditoryCountLabel?.SetText($"Аудитория: {TotalCount(Auditory)}");
+        AuditoryWorkersLabel?.SetText($"Офисники: {Auditory[0]}");
+        AuditoryStudentsLabel?.SetText($"Студенты: {Auditory[1]}");
+        AuditoryPensionersLabel?.SetText($"Пенсионеры: {Auditory[2]}");
+        AuditoryBloggersLabel?.SetText($"Блогеры: {Auditory[3]}");
+        AuditoryEsotericsLabel?.SetText($"Эзотерики: {Auditory[4]}");
+
+        for(int i = 0; i < VisitorSprites.Length; i++)
+        {
+            VisitorSprites[i].SetActive(Auditory[i] > 0);
+        }
     }
     public int TotalCount(int[] array)
     {
@@ -122,14 +159,18 @@ public class Messa : MonoBehaviour
     {
         return TotalCount(NewAdepts).ToString();
     }
+    public int GetFaithIncome()
+    {
+        return TotalCount(OldAdepts) + TotalCount(NewAdepts) - oldAdeptsCount;
+    }
     public int GetTotalAdeptsCount()
     {
         return TotalCount(OldAdepts) + TotalCount(NewAdepts);
     }
     public string GetAdeptsOutflow()
     {
-        int outflow = TotalCount(OldAdepts) - oldAdeptsCount;
-        return outflow == 0 ? $"Нет оттока" : $"{outflow}";
+        int outflow = oldAdeptsCount - TotalCount(OldAdepts);
+        return outflow >= 0 ? $"Нет оттока" : $"{outflow}";
     }
     public void BuyUpgrade(int i)
     {      
@@ -233,12 +274,12 @@ public class Messa : MonoBehaviour
         float frontRow = IsUnlocked(Upgrades.PaidFrontRow) ? Auditory[0] * PaidFrontRowBonus : 0f;
 
         DailyBaseIncome = visitorIncome + oldAdeptIncome;
-        DailyIncome = DailyBaseIncome + frontRow;
+        DailyMoneyIncome = DailyBaseIncome + frontRow;
 
-        if (IsUnlocked(Upgrades.PremiumCandles) && isGoodOrBetter) DailyIncome *= CandlesMultiplier;
+        if (IsUnlocked(Upgrades.PremiumCandles) && isGoodOrBetter) DailyMoneyIncome *= CandlesMultiplier;
 
-        Money += DailyIncome;
-        TotalIncome += DailyIncome;
+        Money += DailyMoneyIncome;
+        TotalMoneyIncome += DailyMoneyIncome;
 
         for (int i = 0; i < 5; i++) Auditory[i] = 0;
 
@@ -280,16 +321,9 @@ public class Messa : MonoBehaviour
     }
     private void StartNewDay()
     {
-        OpenMenu(MenuID.MessaHall);
         InitiateAdepts();
-
-        Auditory = (int[])defaultAuditoryValues.Clone();
-        CurrentDay++;
-
-        UpdateUI();
-
+        GameSessionBridge.Instance.ApplyMessaResult(DailyMoneyIncome, GetFaithIncome(), TotalCount(OldAdepts));
         if (GameSessionBridge.Instance != null) GameSessionBridge.Instance.OpenStreet();
-
     }
     private void InitiateAdepts()
     {
@@ -300,24 +334,7 @@ public class Messa : MonoBehaviour
             NewAdepts[i] = 0;
         }
     }
-    public void UpdateUI()
-    {
-        DayLabel?.SetText($"{CurrentDay}");
-        MoneyLabel?.SetText($"${(int)Money}");
-        OldAdeptsCountLabel?.SetText($"Старые адепты: {TotalCount(OldAdepts)}");
-
-        AuditoryCountLabel?.SetText($"Аудитория: {TotalCount(Auditory)}");
-        AuditoryWorkersLabel?.SetText($"Офисники: {Auditory[0]}");
-        AuditoryStudentsLabel?.SetText($"Студенты: {Auditory[1]}");
-        AuditoryPensionersLabel?.SetText($"Пенсионеры: {Auditory[2]}");
-        AuditoryBloggersLabel?.SetText($"Блогеры: {Auditory[3]}");
-        AuditoryEsotericsLabel?.SetText($"Эзотерики: {Auditory[4]}");    
-    }
-    public void InitiateFromBridge(int adepts)
-    {
-        for (int i = 0; i < OldAdepts.Length; i++)
-            OldAdepts[i] = adepts;
-    }
+    
     public void AddAdepts(int value)
     {
         if (value == 0) return;
@@ -326,8 +343,7 @@ public class Messa : MonoBehaviour
         {
             int perType = Mathf.Max(1, value / NewAdepts.Length);
 
-            for (int i = 0; i < NewAdepts.Length; i++)
-                NewAdepts[i] += perType;
+            for (int i = 0; i < NewAdepts.Length; i++) NewAdepts[i] += perType;
         }
         else
         {
@@ -337,8 +353,7 @@ public class Messa : MonoBehaviour
             for (int i = 0; i < OldAdepts.Length; i++)
             {
                 OldAdepts[i] -= perType;
-                if (OldAdepts[i] < 0)
-                    OldAdepts[i] = 0;
+                if (OldAdepts[i] < 0) OldAdepts[i] = 0;
             }
         }
     }

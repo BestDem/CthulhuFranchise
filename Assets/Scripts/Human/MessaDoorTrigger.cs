@@ -1,10 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-// Точка входа в церковь.
-// Теперь может работать двумя способами:
-// 1) как обычный trigger у двери;
-// 2) напрямую из Human, когда X персонажа дошёл до X двери.
+[RequireComponent(typeof(Collider2D))]
 public class MessaDoorTrigger : MonoBehaviour
 {
     public static MessaDoorTrigger Current { get; private set; }
@@ -12,11 +9,13 @@ public class MessaDoorTrigger : MonoBehaviour
     [SerializeField] private SpawnHuman spawnHuman;
     [SerializeField] private CounterHuman counterHuman;
 
-    private readonly HashSet<Human> acceptedHumans = new HashSet<Human>();
+    private readonly HashSet<int> acceptedHumanIds = new HashSet<int>();
 
     private void Awake()
     {
         Current = this;
+        Collider2D col = GetComponent<Collider2D>();
+        col.isTrigger = true;
     }
 
     private void OnDestroy()
@@ -31,7 +30,11 @@ public class MessaDoorTrigger : MonoBehaviour
         if (human == null)
             human = other.GetComponentInParent<Human>();
 
-        AcceptHuman(human);
+        if (human == null)
+            return;
+
+        if (human.IsGoingToMessa)
+            AcceptHuman(human);
     }
 
     public void AcceptHuman(Human human)
@@ -39,30 +42,23 @@ public class MessaDoorTrigger : MonoBehaviour
         if (human == null)
             return;
 
-        if (acceptedHumans.Contains(human))
+        int id = human.GetInstanceID();
+        if (acceptedHumanIds.Contains(id))
             return;
 
-        if (human.reactionState != 2 || !human.IsGoingToMessa)
-            return;
+        acceptedHumanIds.Add(id);
 
-        acceptedHumans.Add(human);
+        string type = human.HumanType;
+
+        if (GameSessionBridge.Instance != null)
+            GameSessionBridge.Instance.AddVisitorToMessa(type);
 
         if (counterHuman != null)
-            counterHuman.AddHuman(1, human.name);
+            counterHuman.AddHuman(1, type);
 
-        // Главный мост улица -> месса.
-        // Если GameSessionBridge есть на сцене, именно он хранит данные для модуля мессы.
-        if (GameSessionBridge.Instance != null)
-            GameSessionBridge.Instance.AddVisitorToMessa(human.name);
-
-        DeleteHuman(human.gameObject);
-    }
-
-    private void DeleteHuman(GameObject humanObject)
-    {
         if (spawnHuman != null)
-            spawnHuman.DeleteHuman(humanObject);
+            spawnHuman.DeleteHuman(human.gameObject);
         else
-            Destroy(humanObject);
+            Destroy(human.gameObject);
     }
 }

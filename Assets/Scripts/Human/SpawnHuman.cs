@@ -13,6 +13,10 @@ public class SpawnHuman : MonoBehaviour
     [Header("Balance asset")]
     [SerializeField] private ListReactions listReactions;
 
+    [Header("Optional links")]
+    [SerializeField] private DayController dayController;
+    [SerializeField] private GameSessionBridge bridge;
+
     [Header("Wave spawn settings")]
     [SerializeField] private int maxHumansOnScreen = 5;
     [SerializeField] private float phaseStartShare = 0.25f;
@@ -47,8 +51,8 @@ public class SpawnHuman : MonoBehaviour
     private readonly List<GameObject> spawnedHuman = new List<GameObject>();
     private readonly List<SpawnGroup> spawnSchedule = new List<SpawnGroup>();
 
-    private bool canSpawn = true;
-    private int currentDay = 0;
+    private bool canSpawn;
+    private int currentDayIndex = 0;
     private float currentDayDuration = 24f;
     private Coroutine daySpawnRoutine;
     private Coroutine policeRoutine;
@@ -65,54 +69,141 @@ public class SpawnHuman : MonoBehaviour
         }
     }
 
+    public int ActiveSpawnedCount
+    {
+        get
+        {
+            CleanupNulls();
+            return spawnedHuman.Count;
+        }
+    }
+
+    public bool IsSpawning => canSpawn;
+
+    private void Awake()
+    {
+        if (bridge == null)
+            bridge = GameSessionBridge.Instance;
+    }
+
     private void Start()
     {
-        StartDaySpawn();
+        // Не стартуем сами. Старт только от кнопки через DayController.dayEnd(false).
+        canSpawn = false;
     }
 
     private void OnEnable()
     {
-        DayController.dayEnd += EndDay;
+        DayController.dayEnd += OnDayStateChanged;
     }
 
     private void OnDisable()
     {
-        DayController.dayEnd -= EndDay;
+        DayController.dayEnd -= OnDayStateChanged;
+        StopSpawnRoutines();
     }
 
-    private void EndDay(bool endD)
+    private void OnDayStateChanged(bool ended)
     {
-        if (endD)
+        if (ended)
         {
-            canSpawn = false;
-            StopSpawnRoutines();
+            StopNewSpawnsOnly();
             return;
         }
 
-        currentDay += 1;
         StartDaySpawn();
     }
 
-    private void StartDaySpawn()
+    public void StartDaySpawn()
     {
         StopSpawnRoutines();
 
-        if (!HasDayData(currentDay))
+        if (bridge == null)
+            bridge = GameSessionBridge.Instance;
+
+        currentDayIndex = GetCurrentDayIndex();
+
+        if (!HasDayData(currentDayIndex))
         {
             canSpawn = false;
             return;
         }
 
         canSpawn = true;
-        currentDayDuration = Mathf.Max(1f, listReactions.LenDaySec[currentDay]);
-        int totalHumansForDay = Mathf.Max(1, listReactions.CountHuman[currentDay]);
+        currentDayDuration = Mathf.Max(1f, GetDayDuration(currentDayIndex));
+        int totalHumansForDay = GetHumanCountForDay(currentDayIndex);
 
-        BuildWaveSchedule(totalHumansForDay, currentDayDuration, currentDay);
+        ApplyBridgeWeightModifiers();
+        BuildWaveSchedule(totalHumansForDay, currentDayDuration, currentDayIndex);
 
         daySpawnRoutine = StartCoroutine(SpawnDayRoutine());
 
-        if (currentDay > 0 && HasPolicePrefab())
+        if (currentDayIndex > 0 && HasPolicePrefab())
             policeRoutine = StartCoroutine(PoliceRoutine());
+    }
+
+    public void StopNewSpawnsOnly()
+    {
+        canSpawn = false;
+        StopSpawnRoutines();
+    }
+
+    public void ClearAllSpawned()
+    {
+        for (int i = spawnedHuman.Count - 1; i >= 0; i--)
+        {
+            if (spawnedHuman[i] != null)
+                Destroy(spawnedHuman[i]);
+        }
+
+        spawnedHuman.Clear();
+    }
+
+    private int GetCurrentDayIndex()
+    {
+        if (dayController != null)
+            return Mathf.Max(0, dayController.CurrentDayNumber - 1);
+
+        if (bridge != null)
+            return Mathf.Max(0, bridge.CurrentDay - 1);
+
+        return currentDayIndex;
+    }
+
+    private int GetDayDuration(int dayIndex)
+    {
+        if (bridge != null)
+            return bridge.BuildStreetPlan().duration;
+
+        if (listReactions == null || listReactions.LenDaySec == null || listReactions.LenDaySec.Length == 0)
+            return 30;
+
+        dayIndex = Mathf.Clamp(dayIndex, 0, listReactions.LenDaySec.Length - 1);
+        return listReactions.LenDaySec[dayIndex];
+    }
+
+    private int GetHumanCountForDay(int dayIndex)
+    {
+        if (bridge != null)
+            return bridge.BuildStreetPlan().finalHumans;
+
+        if (listReactions == null || listReactions.CountHuman == null || listReactions.CountHuman.Length == 0)
+            return 10;
+
+        dayIndex = Mathf.Clamp(dayIndex, 0, listReactions.CountHuman.Length - 1);
+        return listReactions.CountHuman[dayIndex];
+    }
+
+    private void ApplyBridgeWeightModifiers()
+    {
+        weights["worker"] = 24f;
+        weights["student"] = 24f;
+        weights["retiree"] = 18f;
+        weights["blogger"] = 17f;
+        weights["esoteric"] = 17f;
+
+        if (bridge != null && bridge.HasCthulhuMerch)
+            weights["blogger"] = 25f;
     }
 
     private void StopSpawnRoutines()
@@ -133,10 +224,10 @@ public class SpawnHuman : MonoBehaviour
     private bool HasDayData(int dayIndex)
     {
         if (listReactions == null)
-            return false;
+            return bridge != null;
 
         if (listReactions.LenDaySec == null || listReactions.CountHuman == null)
-            return false;
+            return bridge != null;
 
         return dayIndex >= 0 && dayIndex < listReactions.LenDaySec.Length && dayIndex < listReactions.CountHuman.Length;
     }
@@ -225,49 +316,37 @@ public class SpawnHuman : MonoBehaviour
         float pairWeight;
         float tripleWeight;
 
-        switch (Mathf.Clamp(dayIndex, 0, 4))
+        switch (dayIndex)
         {
             case 0:
-                singleWeight = 75f;
-                pairWeight = 25f;
-                tripleWeight = 0f;
+                singleWeight = 75f; pairWeight = 25f; tripleWeight = 0f;
                 break;
             case 1:
-                singleWeight = 60f;
-                pairWeight = 40f;
-                tripleWeight = 0f;
+                singleWeight = 60f; pairWeight = 40f; tripleWeight = 0f;
                 break;
             case 2:
-                singleWeight = 40f;
-                pairWeight = 45f;
-                tripleWeight = 15f;
+                singleWeight = 40f; pairWeight = 45f; tripleWeight = 15f;
                 break;
             case 3:
-                singleWeight = 30f;
-                pairWeight = 50f;
-                tripleWeight = 20f;
+                singleWeight = 30f; pairWeight = 50f; tripleWeight = 20f;
                 break;
             default:
-                singleWeight = 25f;
-                pairWeight = 50f;
-                tripleWeight = 25f;
+                singleWeight = 25f; pairWeight = 50f; tripleWeight = 25f;
                 break;
         }
 
         if (maxGroupSize < 3)
             tripleWeight = 0f;
-
         if (maxGroupSize < 2)
             pairWeight = 0f;
 
         float total = singleWeight + pairWeight + tripleWeight;
         float roll = Random.Range(0f, total);
 
-        if (roll < singleWeight)
+        if (roll <= singleWeight)
             return 1;
 
-        roll -= singleWeight;
-        if (roll < pairWeight)
+        if (roll <= singleWeight + pairWeight)
             return Mathf.Min(2, maxGroupSize);
 
         return Mathf.Min(3, maxGroupSize);
@@ -275,20 +354,23 @@ public class SpawnHuman : MonoBehaviour
 
     private IEnumerator SpawnDayRoutine()
     {
-        float dayStartTime = Time.time;
+        float elapsed = 0f;
+        int scheduleIndex = 0;
 
-        for (int i = 0; i < spawnSchedule.Count; i++)
+        while (canSpawn && scheduleIndex < spawnSchedule.Count)
         {
-            if (!canSpawn)
-                yield break;
+            elapsed += Time.deltaTime;
 
-            float targetTime = dayStartTime + spawnSchedule[i].time;
+            while (canSpawn && scheduleIndex < spawnSchedule.Count && elapsed >= spawnSchedule[scheduleIndex].time)
+            {
+                yield return StartCoroutine(SpawnGroupRoutine(spawnSchedule[scheduleIndex].size));
+                scheduleIndex++;
+            }
 
-            while (canSpawn && Time.time < targetTime)
-                yield return null;
-
-            yield return StartCoroutine(SpawnGroupRoutine(spawnSchedule[i].size));
+            yield return null;
         }
+
+        daySpawnRoutine = null;
     }
 
     private IEnumerator SpawnGroupRoutine(int groupSize)
@@ -298,8 +380,11 @@ public class SpawnHuman : MonoBehaviour
             if (!canSpawn)
                 yield break;
 
-            while (canSpawn && GetAliveHumanCount() >= maxHumansOnScreen)
+            while (canSpawn && ActiveSpawnedCount >= maxHumansOnScreen)
                 yield return null;
+
+            if (!canSpawn)
+                yield break;
 
             SpawnOneHuman();
 
@@ -310,47 +395,43 @@ public class SpawnHuman : MonoBehaviour
 
     private IEnumerator PoliceRoutine()
     {
-        yield return new WaitForSeconds(policeSpawnInterval);
+        yield return new WaitForSeconds(policeSpawnInterval * 0.5f);
 
         while (canSpawn)
         {
-            if (GetAliveHumanCount() < maxHumansOnScreen)
-                SpawnPolice();
-
+            SpawnPolice();
             yield return new WaitForSeconds(policeSpawnInterval);
         }
-    }
-
-    private int GetAliveHumanCount()
-    {
-        spawnedHuman.RemoveAll(item => item == null);
-        return spawnedHuman.Count;
     }
 
     private void SpawnOneHuman()
     {
         GameObject prefab = GetRandomHumanByWeight();
-
-        if (prefab == null || spawnpoint == null)
-            return;
-
-        GameObject h = Instantiate(prefab, spawnpoint.position, spawnpoint.rotation);
-        spawnedHuman.Add(h);
+        SpawnPrefab(prefab);
     }
 
     private void SpawnPolice()
     {
-        if (!HasPolicePrefab() || spawnpoint == null)
+        if (!HasPolicePrefab())
             return;
 
-        GameObject h = Instantiate(human[5], spawnpoint.position, spawnpoint.rotation);
-        spawnedHuman.Add(h);
+        SpawnPrefab(human[5]);
+    }
+
+    private GameObject SpawnPrefab(GameObject prefab)
+    {
+        if (prefab == null || spawnpoint == null)
+            return null;
+
+        GameObject obj = Instantiate(prefab, spawnpoint.position, spawnpoint.rotation);
+        spawnedHuman.Add(obj);
+        return obj;
     }
 
     public void SetWeight(string type, float newWeight)
     {
         if (weights.ContainsKey(type))
-            weights[type] = newWeight;
+            weights[type] = Mathf.Max(0f, newWeight);
     }
 
     private GameObject GetRandomHumanByWeight()
@@ -359,25 +440,19 @@ public class SpawnHuman : MonoBehaviour
             return null;
 
         float totalWeight = 0f;
-
         foreach (float w in weights.Values)
-            totalWeight += Mathf.Max(0f, w);
-
-        if (totalWeight <= 0f)
-            return human[0];
+            totalWeight += w;
 
         float randomPoint = Random.Range(0f, totalWeight);
         float current = 0f;
 
         foreach (KeyValuePair<string, float> pair in weights)
         {
-            current += Mathf.Max(0f, pair.Value);
-
+            current += pair.Value;
             if (randomPoint <= current)
             {
                 int index = nameToIndex[pair.Key];
-
-                if (index >= 0 && index < human.Length)
+                if (index >= 0 && index < human.Length && human[index] != null)
                     return human[index];
             }
         }
@@ -387,7 +462,19 @@ public class SpawnHuman : MonoBehaviour
 
     public void DeleteHuman(GameObject hum)
     {
+        if (hum == null)
+            return;
+
         spawnedHuman.Remove(hum);
         Destroy(hum);
+    }
+
+    private void CleanupNulls()
+    {
+        for (int i = spawnedHuman.Count - 1; i >= 0; i--)
+        {
+            if (spawnedHuman[i] == null)
+                spawnedHuman.RemoveAt(i);
+        }
     }
 }
