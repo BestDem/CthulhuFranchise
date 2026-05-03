@@ -323,7 +323,7 @@ public class Messa : MonoBehaviour
     {
         InitiateAdepts();
         GameSessionBridge.Instance.ApplyMessaResult(DailyMoneyIncome, GetFaithIncome(), TotalCount(OldAdepts));
-        if (GameSessionBridge.Instance != null) GameSessionBridge.Instance.OpenStreet();
+        if (GameSessionBridge.Instance != null) GameSessionBridge.Instance.ShowPrepare();
     }
     private void InitiateAdepts()
     {
