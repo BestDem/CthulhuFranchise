@@ -37,6 +37,8 @@ public class Messa : MonoBehaviour
     public UpgradePanel UpgradePanel1;
     public UpgradePanel UpgradePanel2;
     public UpgradePanel UpgradePanel3;
+    private int purchasedUpgradesCount;
+
 
     [Header("Множители проповеди")]
     public float BadMultiplier = 0.68f;
@@ -85,6 +87,9 @@ public class Messa : MonoBehaviour
     public TextMeshProUGUI AuditoryPensionersLabel;
     public TextMeshProUGUI AuditoryBloggersLabel;
     public TextMeshProUGUI AuditoryEsotericsLabel;
+
+    public TextMeshProUGUI[] PurchasedUpgradesLabels;
+
     public GameObject[] Menus;
     [Header("Спрайты посетителей")]
     [SerializeField] private GameObject[] VisitorSprites;
@@ -95,6 +100,7 @@ public class Messa : MonoBehaviour
         Instance = this;
         DontDestroyOnLoad(gameObject);
         sfxPlayer = GetComponent<PlaySoundsComponent>();
+        foreach (var label in PurchasedUpgradesLabels) label?.SetText("");
     }
     private void Start()
     {
@@ -177,8 +183,10 @@ public class Messa : MonoBehaviour
         if (i >= UpgradeList.Length || Money < UpgradeList[i].Price) return;   
         Money -= UpgradeList[i].Price;
         UpgradeList[i].Unlocked = true;
-        Debug.Log($"Куплено улучшение: {UpgradeList[i].Header.ToLower()}");
         sfxPlayer.Play("Покупка");
+
+        PurchasedUpgradesLabels[purchasedUpgradesCount]?.SetText(UpgradeList[i].Header);
+        purchasedUpgradesCount++;
         Next();
     }
     public bool IsUnlocked(Upgrades upgrade)
@@ -309,7 +317,6 @@ public class Messa : MonoBehaviour
             if (CurrentDay <= 4)
             {
                 int j = (CurrentDay - 1) * 3;
-                Debug.Log(j);
                 OpenMenu(MenuID.UpgradeShop);
                 UpgradePanel1.BindUpgrade(j);
                 UpgradePanel2.BindUpgrade(j + 1);

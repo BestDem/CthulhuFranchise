@@ -323,7 +323,7 @@ public abstract class Human : MonoBehaviour
 
         if (cachedRigidbody2D != null)
         {
-            cachedRigidbody2D.linearVelocity = Vector2.zero;
+            cachedRigidbody2D.velocity = Vector2.zero;
             cachedRigidbody2D.angularVelocity = 0f;
         }
     }
