@@ -110,7 +110,8 @@ public class GameSessionBridge : MonoBehaviour
     [SerializeField] private GameObject streetPreparePanel;
     [SerializeField] private GameObject streetPanel;
     [SerializeField] private GameObject messaPanel;
-    [SerializeField] private GameObject resultPanel;
+    [SerializeField] private GameObject endLevelPanel;
+    [SerializeField] private GameObject endGamePanel;
 
     [Header("TMP UI")]
     [SerializeField] private TMP_Text dayText;
@@ -186,34 +187,44 @@ public class GameSessionBridge : MonoBehaviour
 
     public void ShowPrepare()
     {
-        if (streetPreparePanel != null) streetPreparePanel.SetActive(true);
-        if (streetPanel != null) streetPanel.SetActive(false);
-        if (messaPanel != null) messaPanel.SetActive(false);
-        if (resultPanel != null) resultPanel.SetActive(false);
+        
+        messaPanel?.SetActive(false);
+        endLevelPanel?.SetActive(false);
+        endGamePanel?.SetActive(false);
+        streetPreparePanel?.SetActive(true);
+        streetPanel?.SetActive(streetPreparePanel == null);
     }
 
     public void OpenStreet()
     {
-        if (streetPreparePanel != null) streetPreparePanel.SetActive(false);
-        if (streetPanel != null) streetPanel.SetActive(true);
-        if (messaPanel != null) messaPanel.SetActive(false);
-        if (resultPanel != null) resultPanel.SetActive(false);
+        streetPreparePanel?.SetActive(false);
+        messaPanel?.SetActive(false);
+        endLevelPanel?.SetActive(false);
+        endGamePanel?.SetActive(false);
+
+        streetPanel?.SetActive(true);
     }
 
     public void OpenMessa()
     {
-        if (streetPreparePanel != null) streetPreparePanel.SetActive(false);
-        if (streetPanel != null) streetPanel.SetActive(false);
-        if (messaPanel != null) messaPanel.SetActive(true);
-        if (resultPanel != null) resultPanel.SetActive(false);
+        streetPreparePanel?.SetActive(false);
+        streetPanel?.SetActive(false); 
+        endLevelPanel?.SetActive(false);
+        endGamePanel?.SetActive(false);
+        messaPanel?.SetActive(true);
     }
 
     public void OpenResult()
     {
-        if (streetPreparePanel != null) streetPreparePanel.SetActive(false);
-        if (streetPanel != null) streetPanel.SetActive(false);
-        if (messaPanel != null) messaPanel.SetActive(false);
-        if (resultPanel != null) resultPanel.SetActive(true);
+        streetPreparePanel?.SetActive(false);
+        streetPanel?.SetActive(false);
+        messaPanel?.SetActive(false);    
+
+        if (CurrentDay < 5)
+        {
+            endLevelPanel?.SetActive(true);
+        }
+        else endGamePanel?.SetActive(true);  
     }
 
     // Кнопка 1: загрузить параметры улицы и показать игроку/программисту, что будет в этом дне.

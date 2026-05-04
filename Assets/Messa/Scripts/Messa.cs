@@ -329,7 +329,9 @@ public class Messa : MonoBehaviour
     private void StartNewDay()
     {
         InitiateAdepts();
+
         GameSessionBridge.Instance.ApplyMessaResult(DailyMoneyIncome, GetFaithIncome(), TotalCount(OldAdepts));
+
         if (GameSessionBridge.Instance != null) GameSessionBridge.Instance.ShowPrepare();
     }
     private void InitiateAdepts()
