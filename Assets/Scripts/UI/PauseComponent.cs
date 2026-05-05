@@ -2,6 +2,7 @@ using UnityEngine;
 
 public class PauseComponent : MonoBehaviour
 {
+    [SerializeField] private GameObject MainMenu;
     [SerializeField] private GameObject PauseMenu;
     [SerializeField] private GameObject OptionsMenu;
     void Start()
@@ -10,7 +11,7 @@ public class PauseComponent : MonoBehaviour
     }
     public void Pause()
     {
-        if (PauseMenu == null) return;
+        if (MainMenu.activeSelf || PauseMenu == null) return;
         
         OptionsMenu?.SetActive(false);
         if (PauseMenu.activeSelf && Time.timeScale == 0f)

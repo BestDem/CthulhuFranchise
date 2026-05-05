@@ -2,7 +2,6 @@
 using TMPro;
 using System.Collections;
 
-[RequireComponent(typeof(PlaySoundsComponent))]
 public class Messa : MonoBehaviour
 {
     public int oldAdeptsCount;
@@ -17,9 +16,6 @@ public class Messa : MonoBehaviour
     [HideInInspector] public int[] Auditory = new int[5];
     [HideInInspector] public int[] NewAdepts = new int[5];
     [HideInInspector] public int[] OldAdepts = new int[5];
-    
-
-    private PlaySoundsComponent sfxPlayer;
 
 
     [Header("Базовая конверсия")]
@@ -99,7 +95,6 @@ public class Messa : MonoBehaviour
     {
         Instance = this;
         DontDestroyOnLoad(gameObject);
-        sfxPlayer = GetComponent<PlaySoundsComponent>();
         foreach (var label in PurchasedUpgradesLabels) label?.SetText("");
     }
     private void Start()
@@ -183,7 +178,7 @@ public class Messa : MonoBehaviour
         if (i >= UpgradeList.Length || Money < UpgradeList[i].Price) return;   
         Money -= UpgradeList[i].Price;
         UpgradeList[i].Unlocked = true;
-        sfxPlayer.Play("Покупка");
+        SFXPlayer.Instance.Play("Покупка");
 
         PurchasedUpgradesLabels[purchasedUpgradesCount]?.SetText(UpgradeList[i].Header);
         purchasedUpgradesCount++;
@@ -295,13 +290,13 @@ public class Messa : MonoBehaviour
     }
     private IEnumerator MessaCoroutine()
     {
-        sfxPlayer.Play("Месса");
+        SFXPlayer.Instance.Play("Месса");
         OpenMenu(MenuID.PendingMessa);
-        sfxPlayer?.Play("");    
+        SFXPlayer.Instance.Play("");    
         yield return new WaitForSeconds(messaDuration);
         UpdateUI();      
         OpenMenu(MenuID.MessaResults);
-        sfxPlayer.Stop();
+        SFXPlayer.Instance.Stop();
     }
     public void Next()
     {
@@ -310,7 +305,7 @@ public class Messa : MonoBehaviour
         {
             StopAllCoroutines();
             OpenMenu(MenuID.MessaResults);
-            sfxPlayer.Stop();
+            SFXPlayer.Instance.Stop();
         }
         else if (Menus[(int)MenuID.MessaResults].activeSelf)
         {
@@ -332,7 +327,7 @@ public class Messa : MonoBehaviour
 
         GameSessionBridge.Instance.ApplyMessaResult(DailyMoneyIncome, GetFaithIncome(), TotalCount(OldAdepts));
 
-        if (GameSessionBridge.Instance != null) GameSessionBridge.Instance.ShowPrepare();
+        if (GameSessionBridge.Instance != null) GameSessionBridge.Instance.OpenStreet();
     }
     private void InitiateAdepts()
     {

@@ -3,7 +3,7 @@ using TMPro;
 
 public class GameSessionBridge : MonoBehaviour
 {
-    public static GameSessionBridge Instance { get; private set; }
+    public static GameSessionBridge Instance;
 
     [System.Serializable]
     public struct MessaInput
@@ -180,20 +180,10 @@ public class GameSessionBridge : MonoBehaviour
 
     private void Start()
     {
-        // Не запускаем улицу автоматически. Только показываем подготовку, если панель назначена.
-        ShowPrepare();
+        OpenStreet();
         UpdateStreetPlanText();
     }
 
-    public void ShowPrepare()
-    {
-        
-        messaPanel?.SetActive(false);
-        endLevelPanel?.SetActive(false);
-        endGamePanel?.SetActive(false);
-        streetPreparePanel?.SetActive(true);
-        streetPanel?.SetActive(streetPreparePanel == null);
-    }
 
     public void OpenStreet()
     {
@@ -203,6 +193,7 @@ public class GameSessionBridge : MonoBehaviour
         endGamePanel?.SetActive(false);
 
         streetPanel?.SetActive(true);
+        StreetDayFlowController.Instance.StartStreetButton();
     }
 
     public void OpenMessa()
@@ -230,7 +221,7 @@ public class GameSessionBridge : MonoBehaviour
     // Кнопка 1: загрузить параметры улицы и показать игроку/программисту, что будет в этом дне.
     public void LoadStreetParametersButton()
     {
-        ShowPrepare();
+        OpenStreet();
         UpdateStreetPlanText();
     }
 
@@ -489,7 +480,7 @@ public class GameSessionBridge : MonoBehaviour
         {
             OpenMessa();
         } 
-        else ShowPrepare();
+        else OpenStreet();
     }
 
     public void LaunchLevelFromInspector()

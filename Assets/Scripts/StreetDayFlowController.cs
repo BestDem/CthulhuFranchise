@@ -41,13 +41,19 @@ public class StreetDayFlowController : MonoBehaviour
     private bool streetRunning;
     private bool waitingForClear;
     private Coroutine waitClearRoutine;
-
+    public static StreetDayFlowController Instance;
     private void Awake()
     {
-        if (bridge == null) bridge = GameSessionBridge.Instance;
+        if (Instance != null && Instance != this)
+        {
+            Destroy(gameObject);
+            return;
+        }
+        Instance = this;
 
-        if (disableGameplayOnAwake)
-            SetGameplayEnabled(false);
+        if (bridge == null) bridge = GameSessionBridge.Instance;
+        if (disableGameplayOnAwake) SetGameplayEnabled(false);
+
     }
 
     private void OnEnable()
@@ -85,7 +91,7 @@ public class StreetDayFlowController : MonoBehaviour
 
         if (bridge != null)
         {
-            bridge.ShowPrepare();
+            bridge.OpenStreet();
             bridge.UpdateStreetPlanText();
 
             if (prepareText != null)
@@ -208,6 +214,7 @@ public class StreetDayFlowController : MonoBehaviour
             return "Нет GameSessionBridge на сцене.";
 
         string text = "ИТОГ УЛИЦЫ\n";
+        text += "Всего было прохожих: " + spawnHuman.spawnedPeople.Count + "\n";
         text += "Всего в мессе: " + bridge.TotalVisitors + "\n";
         text += "Офисники: " + bridge.OfficeVisitors + "\n";
         text += "Студенты: " + bridge.StudentVisitors + "\n";
@@ -215,7 +222,6 @@ public class StreetDayFlowController : MonoBehaviour
         text += "Блогеры: " + bridge.BloggerVisitors + "\n";
         text += "Эзотерики: " + bridge.EsotericVisitors + "\n";
         text += "Деньги сейчас: " + bridge.CurrentMoney + "\n";
-        text += "Данные готовы для мессы через GameSessionBridge.GetMessaInput().";
         return text;
     }
 

@@ -48,8 +48,9 @@ public class SpawnHuman : MonoBehaviour
         {"esoteric", 17f}
     };
 
-    private readonly List<GameObject> spawnedHuman = new List<GameObject>();
+    
     private readonly List<SpawnGroup> spawnSchedule = new List<SpawnGroup>();
+    public readonly List<GameObject> spawnedPeople = new List<GameObject>();
 
     private bool canSpawn;
     private int currentDayIndex = 0;
@@ -74,7 +75,7 @@ public class SpawnHuman : MonoBehaviour
         get
         {
             CleanupNulls();
-            return spawnedHuman.Count;
+            return spawnedPeople.Count;
         }
     }
 
@@ -150,13 +151,13 @@ public class SpawnHuman : MonoBehaviour
 
     public void ClearAllSpawned()
     {
-        for (int i = spawnedHuman.Count - 1; i >= 0; i--)
+        for (int i = spawnedPeople.Count - 1; i >= 0; i--)
         {
-            if (spawnedHuman[i] != null)
-                Destroy(spawnedHuman[i]);
+            if (spawnedPeople[i] != null)
+                Destroy(spawnedPeople[i]);
         }
 
-        spawnedHuman.Clear();
+        spawnedPeople.Clear();
     }
 
     private int GetCurrentDayIndex()
@@ -424,7 +425,7 @@ public class SpawnHuman : MonoBehaviour
             return null;
 
         GameObject obj = Instantiate(prefab, spawnpoint.position, spawnpoint.rotation);
-        spawnedHuman.Add(obj);
+        spawnedPeople.Add(obj);
         return obj;
     }
 
@@ -465,16 +466,16 @@ public class SpawnHuman : MonoBehaviour
         if (hum == null)
             return;
 
-        spawnedHuman.Remove(hum);
+        spawnedPeople.Remove(hum);
         Destroy(hum);
     }
 
     private void CleanupNulls()
     {
-        for (int i = spawnedHuman.Count - 1; i >= 0; i--)
+        for (int i = spawnedPeople.Count - 1; i >= 0; i--)
         {
-            if (spawnedHuman[i] == null)
-                spawnedHuman.RemoveAt(i);
+            if (spawnedPeople[i] == null)
+                spawnedPeople.RemoveAt(i);
         }
     }
 }
