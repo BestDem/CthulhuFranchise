@@ -192,8 +192,7 @@ public class ComboSystem : MonoBehaviour
 
     private void UpdateMoneyTextLocal()
     {
-        if (moneyText != null)
-            moneyText.text = "Деньги: " + localMoney;
+        if (moneyText != null) moneyText.text = "$" + localMoney;
     }
 
     private void PunchComboText()

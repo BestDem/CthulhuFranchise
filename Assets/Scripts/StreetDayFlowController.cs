@@ -206,15 +206,14 @@ public class StreetDayFlowController : MonoBehaviour
         if (bridge == null)
             return "Нет GameSessionBridge на сцене.";
 
-        string text = "ИТОГ УЛИЦЫ\n";
-        text += "Всего было прохожих: " + spawnHuman.spawnedPeople.Count + "\n";
+        string text = "Итоги улицы:\n";
         text += "Всего в мессе: " + bridge.TotalVisitors + "\n";
         text += "Офисники: " + bridge.OfficeVisitors + "\n";
         text += "Студенты: " + bridge.StudentVisitors + "\n";
         text += "Пенсионеры: " + bridge.RetireeVisitors + "\n";
         text += "Блогеры: " + bridge.BloggerVisitors + "\n";
         text += "Эзотерики: " + bridge.EsotericVisitors + "\n";
-        text += "Деньги сейчас: " + bridge.CurrentMoney + "\n";
+        text += "Деньги: $" + bridge.CurrentMoney + "\n";
         return text;
     }
 
