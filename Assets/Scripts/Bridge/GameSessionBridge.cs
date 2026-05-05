@@ -60,9 +60,9 @@ public class GameSessionBridge : MonoBehaviour
 
     [Header("Core State")]
     [SerializeField, Min(1)] private int currentDay = 1;
-    [SerializeField] private int currentMoney = 0;
     [SerializeField] private int totalAdepts = 0;
     [SerializeField] private int faith = 0;
+    public int Money = 0;
 
     [Header("Old adepts by type / future bonuses")]
     [SerializeField] private int officeAdeptCount = 0;
@@ -140,7 +140,7 @@ public class GameSessionBridge : MonoBehaviour
     [SerializeField] private bool debugHasChoir;
 
     public int CurrentDay => currentDay;
-    public int CurrentMoney => currentMoney;
+    public int CurrentMoney => Money;
     public int TotalAdepts => totalAdepts;
     public int Faith => faith;
 
@@ -168,22 +168,14 @@ public class GameSessionBridge : MonoBehaviour
 
     private void Awake()
     {
-        if (Instance != null && Instance != this)
-        {
-            Destroy(gameObject);
-            return;
-        }
-
         Instance = this;
         UpdateUI();
     }
 
     private void Start()
     {
-        OpenStreet();
         UpdateStreetPlanText();
     }
-
 
     public void OpenStreet()
     {
@@ -342,7 +334,7 @@ public class GameSessionBridge : MonoBehaviour
     {
         MessaInput input = new MessaInput();
         input.currentDay = currentDay;
-        input.currentMoney = currentMoney;
+        input.currentMoney = Money;
         input.totalAdepts = totalAdepts;
         input.faith = faith;
 
@@ -371,9 +363,9 @@ public class GameSessionBridge : MonoBehaviour
         input.maxSuspicionToday = maxSuspicionToday;
         return input;
     }
-    public void ApplyMessaResult(float moneyIncome, int faithIncome, int adeptsCount)
+    public void ApplyMessaResult(float money, int faithIncome, int adeptsCount)
     {
-        currentMoney += (int)moneyIncome;
+        Money = (int)money;
         totalAdepts += adeptsCount;
         totalAdepts -= adeptsCount;
         faith += faithIncome;      
@@ -388,16 +380,16 @@ public class GameSessionBridge : MonoBehaviour
 
     public void AddMoney(int value)
     {
-        currentMoney += value;
+        Money += value;
         UpdateUI();
     }
 
     public bool SpendMoney(int value)
     {
-        if (currentMoney < value)
+        if (Money < value)
             return false;
 
-        currentMoney -= value;
+        Money -= value;
         UpdateUI();
         return true;
     }
@@ -455,7 +447,7 @@ public class GameSessionBridge : MonoBehaviour
         bool openMessaPanel)
     {
         currentDay = Mathf.Max(1, day);
-        currentMoney = Mathf.Max(0, money);
+        Money = Mathf.Max(0, money);
         totalAdepts = Mathf.Max(0, adepts);
         faith = Mathf.Max(0, faithValue);
 
@@ -588,7 +580,7 @@ public class GameSessionBridge : MonoBehaviour
     private void UpdateUI()
     {
         if (dayText != null) dayText.text = "День: " + currentDay;
-        if (moneyText != null) moneyText.text = "Деньги: " + currentMoney;
+        if (moneyText != null) moneyText.text = "$" + Money;
         if (messaVisitorsText != null) messaVisitorsText.text = "В мессе: " + TotalVisitors;
         if (adeptsText != null) adeptsText.text = "Адепты: " + totalAdepts;
         if (faithText != null) faithText.text = "Вера: " + faith;

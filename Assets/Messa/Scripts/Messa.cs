@@ -1,14 +1,16 @@
 ﻿using UnityEngine;
-using TMPro;
 using System.Collections;
+using System.Collections.Generic;
+using TMPro;
+
 
 public class Messa : MonoBehaviour
 {
     public int oldAdeptsCount;
     [Header("Основные параметры")]
-    public float Money;   
+    
     public float messaDuration = 3f;
-
+    public float Money;
     [HideInInspector] public float TotalMoneyIncome;
     [HideInInspector] public float DailyMoneyIncome;
     [HideInInspector] public int CurrentDay = 1;
@@ -33,8 +35,9 @@ public class Messa : MonoBehaviour
     public UpgradePanel UpgradePanel1;
     public UpgradePanel UpgradePanel2;
     public UpgradePanel UpgradePanel3;
-    private int purchasedUpgradesCount;
-
+    private List<int> purchasedUpgrades = new List<int>();
+    public List<UpgradePanel> purchasedUpgradesPanels;
+    public GameObject purchasedUpgradesBigPanel;
 
     [Header("Множители проповеди")]
     public float BadMultiplier = 0.68f;
@@ -84,8 +87,6 @@ public class Messa : MonoBehaviour
     public TextMeshProUGUI AuditoryBloggersLabel;
     public TextMeshProUGUI AuditoryEsotericsLabel;
 
-    public TextMeshProUGUI[] PurchasedUpgradesLabels;
-
     public GameObject[] Menus;
     [Header("Спрайты посетителей")]
     [SerializeField] private GameObject[] VisitorSprites;
@@ -95,7 +96,8 @@ public class Messa : MonoBehaviour
     {
         Instance = this;
         DontDestroyOnLoad(gameObject);
-        foreach (var label in PurchasedUpgradesLabels) label?.SetText("");
+        foreach (var panel in purchasedUpgradesPanels) panel.gameObject.SetActive(false);
+        purchasedUpgradesBigPanel.SetActive(false);
     }
     private void Start()
     {
@@ -143,7 +145,7 @@ public class Messa : MonoBehaviour
 
         for(int i = 0; i < VisitorSprites.Length; i++)
         {
-            VisitorSprites[i].SetActive(Auditory[i] > 0);
+            VisitorSprites[i].SetActive(Auditory[i] > 0 || OldAdepts[i] > 0);
         }
     }
     public int TotalCount(int[] array)
@@ -174,14 +176,17 @@ public class Messa : MonoBehaviour
         return outflow >= 0 ? $"Нет оттока" : $"{outflow}";
     }
     public void BuyUpgrade(int i)
-    {      
-        if (i >= UpgradeList.Length || Money < UpgradeList[i].Price) return;   
+    {
+        if (UpgradeList[i].Unlocked) return;
+
+        purchasedUpgradesBigPanel.SetActive(true);
+        if (i >= UpgradeList.Length || Money < UpgradeList[i].Price) return;
         Money -= UpgradeList[i].Price;
         UpgradeList[i].Unlocked = true;
         SFXPlayer.Instance.Play("Покупка");
-
-        PurchasedUpgradesLabels[purchasedUpgradesCount]?.SetText(UpgradeList[i].Header);
-        purchasedUpgradesCount++;
+        purchasedUpgrades.Add(i);
+        purchasedUpgradesPanels[purchasedUpgrades.Count].gameObject.SetActive(true);
+        purchasedUpgradesPanels[purchasedUpgrades.Count].BindUpgrade(i);
         Next();
     }
     public bool IsUnlocked(Upgrades upgrade)
@@ -192,7 +197,6 @@ public class Messa : MonoBehaviour
     {
         oldAdeptsCount = TotalCount(OldAdepts);
         int totalVisitors = TotalCount(Auditory);
-        if (totalVisitors == 0) return;
 
         float share = (float)Auditory[peopleClass] / totalVisitors;
 
@@ -325,7 +329,7 @@ public class Messa : MonoBehaviour
     {
         InitiateAdepts();
 
-        GameSessionBridge.Instance.ApplyMessaResult(DailyMoneyIncome, GetFaithIncome(), TotalCount(OldAdepts));
+        GameSessionBridge.Instance.ApplyMessaResult(Money, GetFaithIncome(), TotalCount(OldAdepts));
 
         if (GameSessionBridge.Instance != null) GameSessionBridge.Instance.OpenStreet();
     }

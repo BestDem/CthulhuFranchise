@@ -12,14 +12,19 @@ public class UpgradePanel : MonoBehaviour
 
     public void BindUpgrade(int i)
     {
+
         if (i >= Messa.Instance.UpgradeList.Length) return;
 
         var upgrade = Messa.Instance.UpgradeList[i];    
-        Header.SetText(upgrade.Header);
-        description.SetText(upgrade.Description);
-        priceLabel.SetText($"Купить за ${upgrade.Price}");
+        Header?.SetText(upgrade.Header);
+        description?.SetText(upgrade.Description);
+        priceLabel?.SetText($"Купить за ${upgrade.Price}");
         icon.sprite = upgrade.Icon;
-        buyButton.onClick.RemoveAllListeners();
-        buyButton.onClick.AddListener(() => Messa.Instance.BuyUpgrade(i));
+
+        if(buyButton != null)
+        {
+            buyButton.onClick.RemoveAllListeners();
+            buyButton.onClick.AddListener(() => Messa.Instance.BuyUpgrade(i));
+        }      
     }
 }

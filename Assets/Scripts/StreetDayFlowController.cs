@@ -44,16 +44,9 @@ public class StreetDayFlowController : MonoBehaviour
     public static StreetDayFlowController Instance;
     private void Awake()
     {
-        if (Instance != null && Instance != this)
-        {
-            Destroy(gameObject);
-            return;
-        }
         Instance = this;
-
         if (bridge == null) bridge = GameSessionBridge.Instance;
         if (disableGameplayOnAwake) SetGameplayEnabled(false);
-
     }
 
     private void OnEnable()
