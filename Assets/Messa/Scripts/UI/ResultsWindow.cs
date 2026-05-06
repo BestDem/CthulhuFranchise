@@ -6,14 +6,15 @@ public class ResultsWindow : MonoBehaviour
     [SerializeField] private TextMeshProUGUI DailyBaseIncomeLabel;
     [SerializeField] private TextMeshProUGUI DailyTotalIncomeLabel;
     [SerializeField] private TextMeshProUGUI newAdeptsLabel;
-    [SerializeField] private TextMeshProUGUI AdeptsOutflowLabel;
-    [SerializeField] private TextMeshProUGUI FaithIncomeLabel;
+    [SerializeField] private TextMeshProUGUI adeptsOutflowLabel;
+    [SerializeField] private TextMeshProUGUI faithIncomeLabel;
     [SerializeField] private TextMeshProUGUI oldAdeptsCalculationLabel;
     [SerializeField] private TextMeshProUGUI oldAdeptsIncomeLabel;
 
     [SerializeField] private TextMeshProUGUI firstRowBonusLabel;
     [SerializeField] private TextMeshProUGUI candleBonusLabel;
     [SerializeField] private TextMeshProUGUI premiumFlyerBonusLabel;
+    [SerializeField] private TextMeshProUGUI messaResultLabel;
 
     [SerializeField] private TextMeshProUGUI[] visitorsCountLabels;
     [SerializeField] private TextMeshProUGUI[] adeptsConversionLabels;
@@ -37,8 +38,9 @@ public class ResultsWindow : MonoBehaviour
         try
         {
             newAdeptsLabel?.SetText(Messa.Instance.GetNewAdeptsCount());
-            AdeptsOutflowLabel?.SetText(Messa.Instance.GetAdeptsOutflow());
-            FaithIncomeLabel?.SetText($"{Messa.Instance.GetFaithIncome()}");
+            adeptsOutflowLabel?.SetText(Messa.Instance.GetAdeptsOutflow());
+            faithIncomeLabel?.SetText($"{Messa.Instance.GetFaithIncome()}");
+            messaResultLabel?.SetText(Messa.Instance.MessaResult);
 
             if (Messa.Instance.IsUnlocked(Upgrades.PaidFrontRow))
             {

@@ -29,6 +29,7 @@ public class Messa : MonoBehaviour
     public float[] BaseIncome = new float[5] { 4.0f, 0.8f, 1.4f, 1.1f, 1.3f };
     
     public float OldAdeptIncomeMultiplier = 0.45f;
+    public string MessaResult = "Отличная месса";
 
     [Header("Улучшения")]
     public UpgradeInfo[] UpgradeList;
@@ -78,6 +79,8 @@ public class Messa : MonoBehaviour
     public GameObject StatsPanel;
     public GameObject UpgradeWindow;
     public GameObject StartNewDayButton;
+    public TextMeshProUGUI EndGameStats;
+
     public TextMeshProUGUI DayLabel;
     public TextMeshProUGUI MoneyLabel;
     public TextMeshProUGUI OldAdeptsCountLabel;
@@ -291,8 +294,18 @@ public class Messa : MonoBehaviour
         Money += DailyMoneyIncome;
         TotalMoneyIncome += DailyMoneyIncome;
 
-        for (int i = 0; i < 5; i++) Auditory[i] = 0;
-
+        if (isExcellent)
+        {
+            MessaResult = "Отличная месса";
+        }
+        else if (isGoodOrBetter)
+        {
+            MessaResult = "Хорошая месса";
+        }
+        else if (isBad)
+        {
+            MessaResult = "Плохая месса";
+        }
         StartCoroutine(MessaCoroutine());
     }
     private IEnumerator MessaCoroutine()
@@ -339,10 +352,12 @@ public class Messa : MonoBehaviour
     public void StartNewDay()
     {
         InitiateAdepts();
-        StartNewDayButton?.SetActive(false);
+        if (CurrentDay == 5) EndGameStats?.SetText(BuildEndGameResultText());   
         UpgradeWindow?.SetActive(true);
+        StartNewDayButton?.SetActive(false);
         GameSessionBridge.Instance.ApplyMessaResult(Money, GetFaithIncome(), TotalCount(OldAdepts));
         if (GameSessionBridge.Instance != null) GameSessionBridge.Instance.StartNewDay();
+        
     }
     private void InitiateAdepts()
     {
@@ -352,8 +367,19 @@ public class Messa : MonoBehaviour
             OldAdepts[i] += NewAdepts[i];
             NewAdepts[i] = 0;
         }
+        for (int i = 0; i < 5; i++) Auditory[i] = 0;
     }
-    
+    private string BuildEndGameResultText()
+    {
+        string text = $"Привлечено адептов: {TotalCount(OldAdepts)}\n";
+        text += $"Офисники: {OldAdepts[0]}\n";
+        text += $"Студенты: {OldAdepts[1]}\n";
+        text += $"Пенсионеры: {OldAdepts[2]}\n";
+        text += $"Блогеры: { OldAdepts[3]}\n";
+        text += $"Эзотерики: {OldAdepts[3]}\n";
+        text += $"Деньги: ${(int)Money}\n";
+        return text;
+    }
     public void AddAdepts(int value)
     {
         if (value == 0) return;

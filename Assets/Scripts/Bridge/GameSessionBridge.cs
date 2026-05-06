@@ -148,7 +148,11 @@ public class GameSessionBridge : MonoBehaviour
     public bool HasPaidFrontRow => hasPaidFrontRow;
     public bool HasChoir => hasChoir;
 
-    private void Awake() => Instance = this;
+    private void Awake() 
+    {
+        Instance = this;
+        endGamePanel.SetActive(false);
+    } 
 
     private void Update()
     {
@@ -336,10 +340,7 @@ public class GameSessionBridge : MonoBehaviour
     public void SetDevilAdvocateUsedToday(bool value) { devilAdvocateUsedToday = value; }
     public void RegisterSuspicion(float value) { if (value > maxSuspicionToday) maxSuspicionToday = value; }
 
-    public void AddMoney(int value)
-    {
-        Money += value;
-    }
+    public void AddMoney(int value) => Money += value;
 
     public bool SpendMoney(int value)
     {

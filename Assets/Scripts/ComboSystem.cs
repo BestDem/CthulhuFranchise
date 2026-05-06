@@ -89,9 +89,7 @@ public class ComboSystem : MonoBehaviour
 
         UpdateComboText();
 
-        // ВАЖНО: не перезаписываем общий MoneyText в "Деньги: 0".
-        if (controlMoneyTextDirectly)
-            UpdateMoneyTextLocal();
+        
     }
 
     private void OnEnable()
@@ -158,13 +156,7 @@ public class ComboSystem : MonoBehaviour
 
         bool sentToGameMoney = TrySendMoneyToReceiver(amount);
 
-        // Если деньги переданы в GameSessionBridge/receiver — НЕ трогаем текст напрямую.
-        // Иначе раньше тут писалось "Деньги: 0/1/5" и казалось, что деньги сбросились.
-        if (controlMoneyTextDirectly || !sentToGameMoney)
-        {
-            localMoney += amount;
-            UpdateMoneyTextLocal();
-        }
+        if (controlMoneyTextDirectly || !sentToGameMoney) localMoney += amount;
 
         PunchMoneyText();
         ShowMoneyPopup(amount);
@@ -188,11 +180,6 @@ public class ComboSystem : MonoBehaviour
     {
         if (comboText != null)
             comboText.text = comboPrefix + currentCombo;
-    }
-
-    private void UpdateMoneyTextLocal()
-    {
-        if (moneyText != null) moneyText.text = "$" + localMoney;
     }
 
     private void PunchComboText()
@@ -259,7 +246,7 @@ public class ComboSystem : MonoBehaviour
     private IEnumerator MoneyPopupRoutine(int amount)
     {
         moneyPopupText.gameObject.SetActive(true);
-        moneyPopupText.text = "+" + amount + " денег";
+        moneyPopupText.text = "+$" + amount;
         moneyPopupText.transform.localScale = popupBaseScale;
         moneyPopupText.rectTransform.anchoredPosition = popupBasePosition;
 

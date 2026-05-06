@@ -194,10 +194,10 @@ public class StreetDayFlowController : MonoBehaviour
             endTitleText.text = string.IsNullOrEmpty(reason) ? manualEndTitle : reason;
 
         if (endResultText != null)
-            endResultText.text = BuildEndResultText();
+            endResultText.text = BuildEndLevelResultText();
     }
 
-    private string BuildEndResultText()
+    private string BuildEndLevelResultText()
     {
         if (bridge == null)
             bridge = GameSessionBridge.Instance;
@@ -206,15 +206,16 @@ public class StreetDayFlowController : MonoBehaviour
             return "Нет GameSessionBridge на сцене.";
 
         string text = "Итоги улицы:\n";
-        text += "Всего в мессе: " + bridge.TotalVisitors + "\n";
+        text += "Привлечено посетителей: " + bridge.TotalVisitors + "\n";
         text += "Офисники: " + bridge.OfficeVisitors + "\n";
         text += "Студенты: " + bridge.StudentVisitors + "\n";
         text += "Пенсионеры: " + bridge.RetireeVisitors + "\n";
         text += "Блогеры: " + bridge.BloggerVisitors + "\n";
         text += "Эзотерики: " + bridge.EsotericVisitors + "\n";
-        text += "Деньги: $" + bridge.CurrentMoney + "\n";
         return text;
     }
+
+    
 
     public void ForceEndDayButton()
     {

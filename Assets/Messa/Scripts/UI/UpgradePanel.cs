@@ -25,6 +25,7 @@ public class UpgradePanel : MonoBehaviour
         {
             buyButton.onClick.RemoveAllListeners();
             buyButton.onClick.AddListener(() => Messa.Instance.BuyUpgrade(i));
+            buyButton.onClick.AddListener(() => SFXPlayer.Instance.Play("Покупка"));
         }      
     }
 }
