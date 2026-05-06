@@ -121,24 +121,6 @@ public class GameSessionBridge : MonoBehaviour
     [SerializeField] private TMP_Text faithText;
     [SerializeField] private TMP_Text streetPlanText;
 
-    [Header("Debug Launch From Inspector")]
-    [SerializeField] private int debugDay = 1;
-    [SerializeField] private int debugMoney = 30;
-    [SerializeField] private int debugAdepts = 5;
-    [SerializeField] private int debugFaith = 0;
-    [SerializeField] private int debugOfficeVisitors = 3;
-    [SerializeField] private int debugStudentVisitors = 3;
-    [SerializeField] private int debugRetireeVisitors = 1;
-    [SerializeField] private int debugBloggerVisitors = 1;
-    [SerializeField] private int debugEsotericVisitors = 1;
-    [SerializeField] private bool debugHasMegafon;
-    [SerializeField] private bool debugHasDevilAdvocate;
-    [SerializeField] private bool debugHasCookies;
-    [SerializeField] private bool debugHasAltar;
-    [SerializeField] private bool debugHasCandles;
-    [SerializeField] private bool debugHasPaidFrontRow;
-    [SerializeField] private bool debugHasChoir;
-
     public int CurrentDay => currentDay;
     public int CurrentMoney => Money;
     public int TotalAdepts => totalAdepts;
@@ -166,15 +148,25 @@ public class GameSessionBridge : MonoBehaviour
     public bool HasPaidFrontRow => hasPaidFrontRow;
     public bool HasChoir => hasChoir;
 
-    private void Awake()
+    private void Awake() => Instance = this;
+
+    private void Update()
     {
-        Instance = this;
-        UpdateUI();
+        if (dayText != null) dayText.text = "День: " + currentDay;
+        if (moneyText != null) moneyText.text = "$" + Money;
+        if (messaVisitorsText != null) messaVisitorsText.text = "В мессе: " + TotalVisitors;
+        if (adeptsText != null) adeptsText.text = "Адепты: " + totalAdepts;
+        if (faithText != null) faithText.text = "Вера: " + faith;
+        if (streetPlanText != null) streetPlanText.text = BuildStreetPlan().description;
     }
 
-    private void Start()
+    public void StartNewDay()
     {
-        UpdateStreetPlanText();
+        if (currentDay > 5)
+        {
+            endGamePanel.SetActive(true);
+        }
+        else OpenStreet();
     }
 
     public void OpenStreet()
@@ -201,20 +193,8 @@ public class GameSessionBridge : MonoBehaviour
     {
         streetPreparePanel?.SetActive(false);
         streetPanel?.SetActive(false);
-        messaPanel?.SetActive(false);    
-
-        if (CurrentDay < 5)
-        {
-            endLevelPanel?.SetActive(true);
-        }
-        else endGamePanel?.SetActive(true);  
-    }
-
-    // Кнопка 1: загрузить параметры улицы и показать игроку/программисту, что будет в этом дне.
-    public void LoadStreetParametersButton()
-    {
-        OpenStreet();
-        UpdateStreetPlanText();
+        messaPanel?.SetActive(false);
+        endLevelPanel?.SetActive(true);
     }
 
     public StreetPlan BuildStreetPlan()
@@ -252,9 +232,10 @@ public class GameSessionBridge : MonoBehaviour
         text += "База дня: " + plan.baseHumans + " / максимум: " + plan.maxHumans + "\n";
 
         if (plan.bonusHumansFromBloggers > 0)
+        {
             text += "Блогеры-адепты: +" + plan.bonusHumansFromBloggers + " прохожих (" + plan.bloggerFlowBonusPercent.ToString("0") + "%).\n";
-        else
-            text += "Бонус блогеров: нет.\n";
+        }          
+        else text += "Бонус блогеров: нет.\n";
 
         text += plan.policeActive ? "Полиция: активна.\n" : "Полиция: нет в этот день.\n";
         text += plan.megafonActive ? "Мегафон: активен, цепляет рядом людей того же типа.\n" : "Мегафон: нет.\n";
@@ -264,25 +245,13 @@ public class GameSessionBridge : MonoBehaviour
         text += plan.accountantActive ? "Бухгалтер бездны: +" + plan.accountantMoney + " денег в начале дня.\n" : "Бухгалтер бездны: нет.\n";
         return text;
     }
-
-    public void UpdateStreetPlanText()
-    {
-        if (streetPlanText != null)
-            streetPlanText.text = BuildStreetPlan().description;
-    }
-
     public void PrepareNewStreetDay()
     {
         ClearVisitorsForNewStreetDay();
         arrestHappenedToday = false;
         devilAdvocateUsedToday = false;
         maxSuspicionToday = 0f;
-
-        if (hasAbyssAccountant)
-            AddMoney(abyssAccountantStartMoney);
-
-        UpdateStreetPlanText();
-        UpdateUI();
+        if (hasAbyssAccountant) AddMoney(abyssAccountantStartMoney);
     }
 
     public int GetStreetHumanCountForCurrentDay()
@@ -299,25 +268,16 @@ public class GameSessionBridge : MonoBehaviour
             case "retiree": retireeVisitors++; break;
             case "blogger": bloggerVisitors++; break;
             case "esoteric": esotericVisitors++; break;
-            default:
-                Debug.LogWarning("GameSessionBridge: неизвестный тип посетителя: " + humanType);
-                break;
         }
-
-        UpdateUI();
     }
 
     public void AddVisitorFromObject(GameObject obj)
     {
-        if (obj == null)
-            return;
+        if (obj == null) return;
 
-        Human human = obj.GetComponent<Human>();
-        if (human == null)
-            human = obj.GetComponentInParent<Human>();
-
-        if (human != null)
-            AddVisitorToMessa(human.HumanType);
+        var human = obj.GetComponent<Human>();
+        if (human == null) human = obj.GetComponentInParent<Human>();
+        if (human != null) AddVisitorToMessa(human.HumanType);
     }
 
     public void ClearVisitorsForNewStreetDay()
@@ -327,7 +287,6 @@ public class GameSessionBridge : MonoBehaviour
         retireeVisitors = 0;
         bloggerVisitors = 0;
         esotericVisitors = 0;
-        UpdateUI();
     }
 
     public MessaInput GetMessaInput()
@@ -371,7 +330,6 @@ public class GameSessionBridge : MonoBehaviour
         faith += faithIncome;      
         if (faith < 0) faith = 0;
         currentDay++;
-        UpdateUI();
     }
 
     public void SetArrestHappenedToday(bool value) { arrestHappenedToday = value; }
@@ -381,16 +339,12 @@ public class GameSessionBridge : MonoBehaviour
     public void AddMoney(int value)
     {
         Money += value;
-        UpdateUI();
     }
 
     public bool SpendMoney(int value)
     {
-        if (Money < value)
-            return false;
-
+        if (Money < value) return false;
         Money -= value;
-        UpdateUI();
         return true;
     }
 
@@ -399,8 +353,6 @@ public class GameSessionBridge : MonoBehaviour
         currentDay++;
         if (currentDay < 1) currentDay = 1;
         ClearVisitorsForNewStreetDay();
-        UpdateStreetPlanText();
-        UpdateUI();
     }
 
     public void RestartCurrentDay()
@@ -409,16 +361,12 @@ public class GameSessionBridge : MonoBehaviour
         arrestHappenedToday = false;
         devilAdvocateUsedToday = false;
         maxSuspicionToday = 0f;
-        UpdateStreetPlanText();
-        UpdateUI();
     }
 
     public void SetDay(int day)
     {
         currentDay = Mathf.Max(1, day);
         ClearVisitorsForNewStreetDay();
-        UpdateStreetPlanText();
-        UpdateUI();
     }
 
     public void SetDay1() { SetDay(1); }
@@ -465,9 +413,6 @@ public class GameSessionBridge : MonoBehaviour
         hasPaidFrontRow = paidFrontRow;
         hasChoir = choir;
 
-        UpdateStreetPlanText();
-        UpdateUI();
-
         if (openMessaPanel)
         {
             OpenMessa();
@@ -475,60 +420,13 @@ public class GameSessionBridge : MonoBehaviour
         else OpenStreet();
     }
 
-    public void LaunchLevelFromInspector()
-    {
-        LaunchLevel(
-            debugDay,
-            debugMoney,
-            debugAdepts,
-            debugFaith,
-            debugOfficeVisitors,
-            debugStudentVisitors,
-            debugRetireeVisitors,
-            debugBloggerVisitors,
-            debugEsotericVisitors,
-            debugHasMegafon,
-            debugHasDevilAdvocate,
-            debugHasCookies,
-            debugHasAltar,
-            debugHasCandles,
-            debugHasPaidFrontRow,
-            debugHasChoir,
-            true
-        );
-    }
-
-    public void LaunchMessaTest()
-    {
-        LaunchLevelFromInspector();
-    }
-
-    public void LaunchStreetTest()
-    {
-        LaunchLevel(
-            debugDay,
-            debugMoney,
-            debugAdepts,
-            debugFaith,
-            0, 0, 0, 0, 0,
-            debugHasMegafon,
-            debugHasDevilAdvocate,
-            debugHasCookies,
-            debugHasAltar,
-            debugHasCandles,
-            debugHasPaidFrontRow,
-            debugHasChoir,
-            false
-        );
-    }
-
-    public void SetMegafon(bool value) { hasMegafon = value; UpdateStreetPlanText(); }
-    public void SetDevilAdvocate(bool value) { hasDevilAdvocate = value; UpdateStreetPlanText(); }
-    public void SetSelfImprovementClub(bool value) { hasSelfImprovementClub = value; UpdateStreetPlanText(); }
-    public void SetPremiumFlyer(bool value) { hasPremiumFlyer = value; UpdateStreetPlanText(); }
-    public void SetCthulhuMerch(bool value) { hasCthulhuMerch = value; UpdateStreetPlanText(); }
-    public void SetWordOfMouth(bool value) { hasWordOfMouth = value; UpdateStreetPlanText(); }
-    public void SetAbyssAccountant(bool value) { hasAbyssAccountant = value; UpdateStreetPlanText(); }
+    public void SetMegafon(bool value) => hasMegafon = value;
+    public void SetDevilAdvocate(bool value) => hasDevilAdvocate = value;
+    public void SetSelfImprovementClub(bool value) => hasSelfImprovementClub = value; 
+    public void SetPremiumFlyer(bool value) => hasPremiumFlyer = value;
+    public void SetCthulhuMerch(bool value) => hasCthulhuMerch = value; 
+    public void SetWordOfMouth(bool value) => hasWordOfMouth = value;
+    public void SetAbyssAccountant(bool value) => hasAbyssAccountant = value;
     public void SetCookies(bool value) { hasCookies = value; }
     public void SetAltar(bool value) { hasAltar = value; }
     public void SetCandles(bool value) { hasCandles = value; }
@@ -538,7 +436,6 @@ public class GameSessionBridge : MonoBehaviour
     public int GetDuration(int dayIndex)
     {
         if (listReactions == null || listReactions.LenDaySec == null || listReactions.LenDaySec.Length == 0) return 60;
-
 
         dayIndex = Mathf.Clamp(dayIndex, 0, listReactions.LenDaySec.Length - 1);
         return listReactions.LenDaySec[dayIndex];
@@ -576,13 +473,5 @@ public class GameSessionBridge : MonoBehaviour
 
         return value;
     }
-
-    private void UpdateUI()
-    {
-        if (dayText != null) dayText.text = "День: " + currentDay;
-        if (moneyText != null) moneyText.text = "$" + Money;
-        if (messaVisitorsText != null) messaVisitorsText.text = "В мессе: " + TotalVisitors;
-        if (adeptsText != null) adeptsText.text = "Адепты: " + totalAdepts;
-        if (faithText != null) faithText.text = "Вера: " + faith;
-    }
+    
 }

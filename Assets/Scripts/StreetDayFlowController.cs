@@ -85,10 +85,9 @@ public class StreetDayFlowController : MonoBehaviour
         if (bridge != null)
         {
             bridge.OpenStreet();
-            bridge.UpdateStreetPlanText();
 
-            if (prepareText != null)
-                prepareText.text = bridge.BuildStreetPlan().description + "\nНажми 'Начать улицу', чтобы запустить таймер и спавн.";
+            if (prepareText != null) prepareText.text = bridge.BuildStreetPlan().description + "\nНажми 'Начать улицу', чтобы запустить таймер и спавн.";
+
         }
     }
 

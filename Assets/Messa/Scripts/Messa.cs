@@ -76,6 +76,8 @@ public class Messa : MonoBehaviour
 
     [Header("UI")]
     public GameObject StatsPanel;
+    public GameObject UpgradeWindow;
+    public GameObject StartNewDayButton;
     public TextMeshProUGUI DayLabel;
     public TextMeshProUGUI MoneyLabel;
     public TextMeshProUGUI OldAdeptsCountLabel;
@@ -97,7 +99,8 @@ public class Messa : MonoBehaviour
         Instance = this;
         DontDestroyOnLoad(gameObject);
         foreach (var panel in purchasedUpgradesPanels) panel.gameObject.SetActive(false);
-        purchasedUpgradesBigPanel.SetActive(false);
+        purchasedUpgradesBigPanel?.SetActive(false);
+        StartNewDayButton?.SetActive(false);
     }
     private void Start()
     {
@@ -313,25 +316,33 @@ public class Messa : MonoBehaviour
         }
         else if (Menus[(int)MenuID.MessaResults].activeSelf)
         {
+            OpenMenu(MenuID.UpgradeShop);
             if (CurrentDay <= 4)
             {
-                int j = (CurrentDay - 1) * 3;
-                OpenMenu(MenuID.UpgradeShop);
+                int j = (CurrentDay - 1) * 3;            
                 UpgradePanel1.BindUpgrade(j);
                 UpgradePanel2.BindUpgrade(j + 1);
                 UpgradePanel3.BindUpgrade(j + 2);
-            } 
-            else StartNewDay();
+            }
+            else
+            {
+                UpgradeWindow?.SetActive(false);
+                StartNewDayButton?.SetActive(true);
+            }
         }
-        else if (Menus[(int)MenuID.UpgradeShop].activeSelf) StartNewDay();
+        else if (Menus[(int)MenuID.UpgradeShop].activeSelf) 
+        {
+            UpgradeWindow?.SetActive(false);
+            StartNewDayButton?.SetActive(true);
+        }       
     }
-    private void StartNewDay()
+    public void StartNewDay()
     {
         InitiateAdepts();
-
+        StartNewDayButton?.SetActive(false);
+        UpgradeWindow?.SetActive(true);
         GameSessionBridge.Instance.ApplyMessaResult(Money, GetFaithIncome(), TotalCount(OldAdepts));
-
-        if (GameSessionBridge.Instance != null) GameSessionBridge.Instance.OpenStreet();
+        if (GameSessionBridge.Instance != null) GameSessionBridge.Instance.StartNewDay();
     }
     private void InitiateAdepts()
     {
