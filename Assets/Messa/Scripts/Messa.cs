@@ -191,12 +191,14 @@ public class Messa : MonoBehaviour
     }
     public void BuyUpgrade(int i)
     {
-        if (UpgradeList[i].Unlocked) return;
-
-        if (i >= UpgradePanels.Length || i >= UpgradeList.Length || Money < UpgradeList[i].Price) return;
-
+        if (UpgradeList[i].Unlocked || i >= UpgradePanels.Length || i >= UpgradeList.Length || Money < UpgradeList[i].Price) 
+        {
+            SFXPlayer.Instance.Play("Карта");
+            return;
+        }      
         Money -= UpgradeList[i].Price;
         UpgradeList[i].Unlocked = true;
+        SFXPlayer.Instance.Play("Покупка");
         UpgradePanels[i].DisableBuy();
     }
     public bool IsUnlocked(Upgrades upgrade)
