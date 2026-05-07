@@ -369,8 +369,10 @@ public class Messa : MonoBehaviour
     {
         if (Money > needMoney && TotalCount(OldAdepts) > needAdepts)
         {
+            SFXPlayer.Instance.Play("Успех3");
             return "Филиал принят";
         }
+        SFXPlayer.Instance.Play("Проигрыш");
         return "Провал филиала";
     }
     private string BuildEndGameResultText()

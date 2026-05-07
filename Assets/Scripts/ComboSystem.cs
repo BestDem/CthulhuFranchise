@@ -284,7 +284,7 @@ public class ComboSystem : MonoBehaviour
 
         if (GameSessionBridge.Instance != null)
         {
-            GameSessionBridge.Instance.AddMoney(amount);
+            GameSessionBridge.Instance.Money += amount;
             return true;
         }
 

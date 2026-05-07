@@ -103,7 +103,6 @@ public class GameSessionBridge : MonoBehaviour
     [SerializeField] private int[] maxHumansWithBonusesByDay = new int[] { 10, 20, 25, 30, 30 };
     [SerializeField] private float bloggerFlowBonusPerAdept = 0.02f;
     [SerializeField] private float maxBloggerFlowBonus = 0.30f;
-    [SerializeField] private int abyssAccountantStartMoney = 3;
 
     [Header("Panels")]
     [SerializeField] private GameObject streetPreparePanel;
@@ -220,7 +219,6 @@ public class GameSessionBridge : MonoBehaviour
         plan.selfImprovementActive = hasSelfImprovementClub;
         plan.merchActive = hasCthulhuMerch;
         plan.accountantActive = hasAbyssAccountant;
-        plan.accountantMoney = hasAbyssAccountant ? abyssAccountantStartMoney : 0;
         plan.description = BuildStreetPlanDescription(plan);
         return plan;
     }
@@ -252,7 +250,6 @@ public class GameSessionBridge : MonoBehaviour
         arrestHappenedToday = false;
         devilAdvocateUsedToday = false;
         maxSuspicionToday = 0f;
-        if (hasAbyssAccountant) AddMoney(abyssAccountantStartMoney);
     }
 
     public int GetStreetHumanCountForCurrentDay()
@@ -333,8 +330,6 @@ public class GameSessionBridge : MonoBehaviour
     public void SetArrestHappenedToday(bool value) { arrestHappenedToday = value; }
     public void SetDevilAdvocateUsedToday(bool value) { devilAdvocateUsedToday = value; }
     public void RegisterSuspicion(float value) { if (value > maxSuspicionToday) maxSuspicionToday = value; }
-
-    public void AddMoney(int value) => Money += value;
 
     public bool SpendMoney(int value)
     {

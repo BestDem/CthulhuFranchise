@@ -49,7 +49,7 @@ public class CounterHuman : MonoBehaviour
             int income = GetIncome(key) * add;
             currentMoney += income;
             if (GameSessionBridge.Instance != null)
-                GameSessionBridge.Instance.AddMoney(income);
+                GameSessionBridge.Instance.Money += income;
         }
 
         Debug.Log("В мессе: " + todayVisitors + " | Тип: " + key + " | Кол-во типа: " + countRecruit[key]);
