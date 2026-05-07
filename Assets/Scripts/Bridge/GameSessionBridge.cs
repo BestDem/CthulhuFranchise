@@ -61,7 +61,6 @@ public class GameSessionBridge : MonoBehaviour
     [Header("Core State")]
     [SerializeField, Min(1)] private int currentDay = 1;
     [SerializeField] private int totalAdepts = 0;
-    [SerializeField] private int faith = 0;
     public int Money = 0;
 
     [Header("Old adepts by type / future bonuses")]
@@ -124,7 +123,6 @@ public class GameSessionBridge : MonoBehaviour
     public int CurrentDay => currentDay;
     public int CurrentMoney => Money;
     public int TotalAdepts => totalAdepts;
-    public int Faith => faith;
 
     public int OfficeVisitors => officeVisitors;
     public int StudentVisitors => studentVisitors;
@@ -160,7 +158,6 @@ public class GameSessionBridge : MonoBehaviour
         if (moneyText != null) moneyText.text = "$" + Money;
         if (messaVisitorsText != null) messaVisitorsText.text = "В мессе: " + TotalVisitors;
         if (adeptsText != null) adeptsText.text = "Адепты: " + totalAdepts;
-        if (faithText != null) faithText.text = "Вера: " + faith;
         if (streetPlanText != null) streetPlanText.text = BuildStreetPlan().description;
     }
 
@@ -299,7 +296,6 @@ public class GameSessionBridge : MonoBehaviour
         input.currentDay = currentDay;
         input.currentMoney = Money;
         input.totalAdepts = totalAdepts;
-        input.faith = faith;
 
         input.officeVisitors = officeVisitors;
         input.studentVisitors = studentVisitors;
@@ -326,13 +322,11 @@ public class GameSessionBridge : MonoBehaviour
         input.maxSuspicionToday = maxSuspicionToday;
         return input;
     }
-    public void ApplyMessaResult(float money, int faithIncome, int adeptsCount)
+    public void ApplyMessaResult(float money, int adeptsCount)
     {
         Money = (int)money;
         totalAdepts += adeptsCount;
         totalAdepts -= adeptsCount;
-        faith += faithIncome;      
-        if (faith < 0) faith = 0;
         currentDay++;
     }
 
@@ -398,7 +392,6 @@ public class GameSessionBridge : MonoBehaviour
         currentDay = Mathf.Max(1, day);
         Money = Mathf.Max(0, money);
         totalAdepts = Mathf.Max(0, adepts);
-        faith = Mathf.Max(0, faithValue);
 
         officeVisitors = Mathf.Max(0, office);
         studentVisitors = Mathf.Max(0, students);

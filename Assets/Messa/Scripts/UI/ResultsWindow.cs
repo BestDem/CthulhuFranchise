@@ -39,7 +39,6 @@ public class ResultsWindow : MonoBehaviour
         {
             newAdeptsLabel?.SetText(Messa.Instance.GetNewAdeptsCount());
             adeptsOutflowLabel?.SetText(Messa.Instance.GetAdeptsOutflow());
-            faithIncomeLabel?.SetText($"{Messa.Instance.GetFaithIncome()}");
             messaResultLabel?.SetText(Messa.Instance.MessaResult);
 
             if (Messa.Instance.IsUnlocked(Upgrades.PaidFrontRow))
