@@ -108,7 +108,7 @@ public class GameSessionBridge : MonoBehaviour
     [SerializeField] private GameObject streetPreparePanel;
     [SerializeField] private GameObject streetPanel;
     [SerializeField] private GameObject messaPanel;
-    [SerializeField] private GameObject endLevelPanel;
+    [SerializeField] private StreetResultsWindow endLevelPanel;
     [SerializeField] private GameObject endGamePanel;
 
     [Header("TMP UI")]
@@ -149,6 +149,7 @@ public class GameSessionBridge : MonoBehaviour
     {
         Instance = this;
         endGamePanel.SetActive(false);
+        endLevelPanel.gameObject?.SetActive(false);
     } 
 
     private void Update()
@@ -173,7 +174,7 @@ public class GameSessionBridge : MonoBehaviour
     {
         streetPreparePanel?.SetActive(false);
         messaPanel?.SetActive(false);
-        endLevelPanel?.SetActive(false);
+        endLevelPanel.gameObject?.SetActive(false);
         endGamePanel?.SetActive(false);
 
         streetPanel?.SetActive(true);
@@ -184,7 +185,7 @@ public class GameSessionBridge : MonoBehaviour
     {
         streetPreparePanel?.SetActive(false);
         streetPanel?.SetActive(false); 
-        endLevelPanel?.SetActive(false);
+        endLevelPanel.gameObject?.SetActive(false);
         endGamePanel?.SetActive(false);
         messaPanel?.SetActive(true);
     }
@@ -194,7 +195,10 @@ public class GameSessionBridge : MonoBehaviour
         streetPreparePanel?.SetActive(false);
         streetPanel?.SetActive(false);
         messaPanel?.SetActive(false);
-        endLevelPanel?.SetActive(true);
+        endLevelPanel.gameObject?.SetActive(true);
+
+        int[] visitors = new int[] { officeVisitors, studentVisitors, bloggerVisitors, esotericVisitors, retireeVisitors };
+        endLevelPanel.UpdateLabels(visitors);
     }
 
     public StreetPlan BuildStreetPlan()

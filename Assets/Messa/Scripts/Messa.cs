@@ -47,9 +47,8 @@ public class Messa : MonoBehaviour
     public float ExcellentThreshold = 0.50f;
 
     [Header("Цели")]
-    public int needMoney = 50;
     public int needAdepts = 20;
-
+    public int needMoney = 50;
 
     [Header("Бонусы")]
     public float CookieBonus = 0.12f;
@@ -333,11 +332,18 @@ public class Messa : MonoBehaviour
         }
         else if (Menus[(int)MenuID.MessaResults].activeSelf)
         {
-            if (CurrentDay > 4) 
+            if (CurrentDay > 4)
             {
                 StartNewDay();
             }
-            else OpenMenu(MenuID.UpgradeShop);
+            else 
+            {
+                int j = (CurrentDay - 1) * 3;
+                UpgradePanels[j].gameObject.SetActive(true);
+                UpgradePanels[j + 1].gameObject.SetActive(true);
+                UpgradePanels[j + 2].gameObject.SetActive(true);
+                OpenMenu(MenuID.UpgradeShop);
+            } 
         }
         else if (Menus[(int)MenuID.UpgradeShop].activeSelf) 
         {
