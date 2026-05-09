@@ -23,8 +23,6 @@ public class MusicPlayer : MonoBehaviour
     }
     public void PlayMusic(AudioClip clip)
     {
-        if (clip == null) return;
-        if (AudioSource.clip == clip && AudioSource.isPlaying) return;
         AudioSource.clip = clip;
         AudioSource.Play();
     }

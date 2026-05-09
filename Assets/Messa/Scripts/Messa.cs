@@ -336,14 +336,7 @@ public class Messa : MonoBehaviour
             {
                 StartNewDay();
             }
-            else 
-            {
-                int j = (CurrentDay - 1) * 3;
-                UpgradePanels[j].gameObject.SetActive(true);
-                UpgradePanels[j + 1].gameObject.SetActive(true);
-                UpgradePanels[j + 2].gameObject.SetActive(true);
-                OpenMenu(MenuID.UpgradeShop);
-            } 
+            else OpenMenu(MenuID.UpgradeShop);
         }
         else if (Menus[(int)MenuID.UpgradeShop].activeSelf) 
         {

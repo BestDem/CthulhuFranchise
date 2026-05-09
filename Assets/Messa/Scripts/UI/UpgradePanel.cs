@@ -39,7 +39,6 @@ public class UpgradePanel : MonoBehaviour
             buyButton.onClick.RemoveAllListeners();
             buyButton.onClick.AddListener(() => Messa.Instance.BuyUpgrade(i));
         }
-        gameObject.SetActive(false);
     }
     public void DisableBuy()
     {
