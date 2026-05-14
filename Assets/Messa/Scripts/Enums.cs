@@ -1,9 +1,10 @@
 public enum MenuID
 {
-    MessaHall,
+    MessaHall,  
     MessaResults,
     UpgradeShop,
     PendingMessa,
+    MainMessaResults,
 }
 public enum Upgrades
 {

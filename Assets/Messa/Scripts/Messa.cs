@@ -6,7 +6,7 @@ using TMPro;
 
 public class Messa : MonoBehaviour
 {
-    [HideInInspector] public int oldAdeptsCount;
+    public int oldAdeptsCount;
     [Header("Основные параметры")]
     
     public float messaDuration = 3f;
@@ -18,7 +18,7 @@ public class Messa : MonoBehaviour
     [HideInInspector] public int[] Auditory = new int[5];
     [HideInInspector] public int[] NewAdepts = new int[5];
     [HideInInspector] public int[] OldAdepts = new int[5];
-
+    [HideInInspector] public string MessaResult = "Отличная месса";
 
     [Header("Базовая конверсия")]
     public float[] BaseConversion = new float[5] { 0.30f, 0.52f, 0.34f, 0.30f, 0.38f };
@@ -29,11 +29,20 @@ public class Messa : MonoBehaviour
     public float[] BaseIncome = new float[5] { 4.0f, 0.8f, 1.4f, 1.1f, 1.3f };
     
     public float OldAdeptIncomeMultiplier = 0.45f;
-    public string MessaResult = "Отличная месса";
+
+    [Header("Целевые значения")]
+    public int NeedAdepts = 15;
+    public int NeedMoney = 50;
+
 
     [Header("Улучшения")]
     public UpgradeInfo[] UpgradeList;
-    public UpgradePanel[] UpgradePanels;
+    public UpgradePanel UpgradePanel1;
+    public UpgradePanel UpgradePanel2;
+    public UpgradePanel UpgradePanel3;
+    private List<int> purchasedUpgrades = new List<int>();
+    public List<UpgradePanel> purchasedUpgradesPanels;
+    public GameObject purchasedUpgradesBigPanel;
 
     [Header("Множители проповеди")]
     public float BadMultiplier = 0.68f;
@@ -46,9 +55,6 @@ public class Messa : MonoBehaviour
     public float GoodThreshold = 0.34f;
     public float ExcellentThreshold = 0.50f;
 
-    [Header("Цели")]
-    public int needAdepts = 20;
-    public int needMoney = 50;
 
     [Header("Бонусы")]
     public float CookieBonus = 0.12f;
@@ -56,8 +62,6 @@ public class Messa : MonoBehaviour
     public float AltarExcellentBonus = 0.08f;
     public float PremiumFlyerBonus = 0.05f;
     public int AbyssAccountantBonus = 3;
-    
-
 
     public float EsotericBonusPerUnit = 0.02f;
     public float EsotericBonusCap = 0.20f;
@@ -79,60 +83,34 @@ public class Messa : MonoBehaviour
     [Header("UI")]
     public GameObject StatsPanel;
     public GameObject UpgradeWindow;
-    public TextMeshProUGUI EndGameStats;
-    public TextMeshProUGUI EndGameHeader;
-
     public TextMeshProUGUI DayLabel;
     public TextMeshProUGUI MoneyLabel;
     public TextMeshProUGUI OldAdeptsCountLabel;
-    public TextMeshProUGUI AuditoryCountLabel;
 
     public TextMeshProUGUI AuditoryWorkersLabel;
     public TextMeshProUGUI AuditoryStudentsLabel;
     public TextMeshProUGUI AuditoryPensionersLabel;
     public TextMeshProUGUI AuditoryBloggersLabel;
     public TextMeshProUGUI AuditoryEsotericsLabel;
-
+    
     public GameObject[] Menus;
     [Header("Спрайты посетителей")]
     [SerializeField] private GameObject[] VisitorSprites;
   
-    [Header("Музыка")]
-    [SerializeField] private AudioClip messaMusic;
-
     public static Messa Instance;
     private void Awake()
     {
         Instance = this;
-        
+        foreach (var panel in purchasedUpgradesPanels) panel.gameObject.SetActive(false);
+        purchasedUpgradesBigPanel?.SetActive(false);
     }
     private void Start()
     {
         LoadFromBridge();
-        BindUpgrades();
     }
     private void OnEnable()
     {
-        LoadFromBridge();
-        MusicPlayer.Instance.PlayMusic(messaMusic);
-    }
-    private void Update()
-    {
-        DayLabel?.SetText($"{CurrentDay}");
-        MoneyLabel?.SetText($"${(int)Money}");
-        OldAdeptsCountLabel?.SetText($"Старые адепты: {TotalCount(OldAdepts)}");
-
-        AuditoryCountLabel?.SetText($"Аудитория: {TotalCount(Auditory)}");
-        AuditoryWorkersLabel?.SetText($"Офисники: {Auditory[0]}");
-        AuditoryStudentsLabel?.SetText($"Студенты: {Auditory[1]}");
-        AuditoryPensionersLabel?.SetText($"Пенсионеры: {Auditory[2]}");
-        AuditoryBloggersLabel?.SetText($"Блогеры: {Auditory[3]}");
-        AuditoryEsotericsLabel?.SetText($"Эзотерики: {Auditory[4]}");
-
-        for (int i = 0; i < VisitorSprites.Length; i++)
-        {
-            VisitorSprites[i].SetActive(Auditory[i] > 0 || OldAdepts[i] > 0);
-        }
+        LoadFromBridge();     
     }
     private void LoadFromBridge()
     {    
@@ -149,22 +127,31 @@ public class Messa : MonoBehaviour
         Auditory[4] = input.esotericVisitors;
 
         OpenMenu((int)MenuID.MessaHall);
+        UpdateUI();
     }
-    private void BindUpgrades()
-    {
-        int n = Mathf.Min(UpgradeList.Length, UpgradePanels.Length);
-
-        for (int i = 0; i < n; i++) 
-        {
-            if(!UpgradeList[i].Unlocked) UpgradePanels[i].BindUpgrade(i);
-        }     
-    }
+    
     private void OpenMenu(MenuID menuID)
     {
         for (int i = 0; i < Menus.Length; i++) Menus[i]?.SetActive(i == (int)menuID);
         StatsPanel.SetActive(menuID != MenuID.PendingMessa);
     }
-    
+    public void UpdateUI()
+    {
+        DayLabel?.SetText($"{CurrentDay}");
+        MoneyLabel?.SetText($"${(int)Money}");
+        OldAdeptsCountLabel?.SetText($"Старые адепты: {TotalCount(OldAdepts)}");
+
+        AuditoryWorkersLabel?.SetText($"x{Auditory[0]}");
+        AuditoryStudentsLabel?.SetText($"x{Auditory[1]}");
+        AuditoryPensionersLabel?.SetText($"x{Auditory[2]}");
+        AuditoryBloggersLabel?.SetText($"x{Auditory[3]}");
+        AuditoryEsotericsLabel?.SetText($"x{Auditory[4]}");
+
+        for(int i = 0; i < VisitorSprites.Length; i++)
+        {
+            VisitorSprites[i].SetActive(Auditory[i] > 0 || OldAdepts[i] > 0);
+        }
+    }
     public int TotalCount(int[] array)
     {
         int count = 0;
@@ -179,26 +166,31 @@ public class Messa : MonoBehaviour
     {
         return TotalCount(NewAdepts).ToString();
     }
+    public string GetVisitorsCount()
+    {
+        return TotalCount(Auditory).ToString();
+    }
     public int GetTotalAdeptsCount()
     {
         return TotalCount(OldAdepts) + TotalCount(NewAdepts);
     }
     public string GetAdeptsOutflow()
     {
-        int outflow = oldAdeptsCount - TotalCount(OldAdepts);
-        return outflow >= 0 ? $"Нет оттока" : $"{outflow}";
+        return $"{oldAdeptsCount - TotalCount(OldAdepts)}";
     }
     public void BuyUpgrade(int i)
     {
-        if (UpgradeList[i].Unlocked || i >= UpgradePanels.Length || i >= UpgradeList.Length || Money < UpgradeList[i].Price) 
-        {
-            SFXPlayer.Instance.Play("Карта");
-            return;
-        }      
+        if (UpgradeList[i].Unlocked) return;
+
+        purchasedUpgradesBigPanel.SetActive(true);
+        if (i >= UpgradeList.Length || Money < UpgradeList[i].Price) return;
         Money -= UpgradeList[i].Price;
         UpgradeList[i].Unlocked = true;
         SFXPlayer.Instance.Play("Покупка");
-        UpgradePanels[i].DisableBuy();
+        purchasedUpgrades.Add(i);
+        purchasedUpgradesPanels[purchasedUpgrades.Count].gameObject.SetActive(true);
+        purchasedUpgradesPanels[purchasedUpgrades.Count].BindUpgrade(i);
+        Next();
     }
     public bool IsUnlocked(Upgrades upgrade)
     {
@@ -303,11 +295,11 @@ public class Messa : MonoBehaviour
         {
             MessaResult = "Отличная месса";
         }
-        else if (isGoodOrBetter)
+        if (isGoodOrBetter)
         {
             MessaResult = "Хорошая месса";
         }
-        else if (isBad)
+        if (isBad || TotalCount(Auditory) == 0)
         {
             MessaResult = "Плохая месса";
         }
@@ -318,25 +310,39 @@ public class Messa : MonoBehaviour
         SFXPlayer.Instance.Play("Месса");
         OpenMenu(MenuID.PendingMessa);
         SFXPlayer.Instance.Play("");    
-        yield return new WaitForSeconds(messaDuration);      
-        OpenMenu(MenuID.MessaResults);
+        yield return new WaitForSeconds(messaDuration);
+        UpdateUI();      
+        OpenMenu(MenuID.MainMessaResults);
         SFXPlayer.Instance.Stop();
     }
     public void Next()
     {
+        SFXPlayer.Instance.Play("Клик");
+        UpdateUI();
         if (Menus[(int)MenuID.PendingMessa].activeSelf)
         {
             StopAllCoroutines();
-            OpenMenu(MenuID.MessaResults);
+            OpenMenu(MenuID.MainMessaResults);
             SFXPlayer.Instance.Stop();
+        }
+        else if (Menus[(int)MenuID.MainMessaResults].activeSelf)
+        {
+            OpenMenu(MenuID.MessaResults);
         }
         else if (Menus[(int)MenuID.MessaResults].activeSelf)
         {
-            if (CurrentDay > 4)
+            OpenMenu(MenuID.UpgradeShop);
+            if (CurrentDay <= 4)
             {
-                StartNewDay();
+                int j = (CurrentDay - 1) * 3;            
+                UpgradePanel1.BindUpgrade(j);
+                UpgradePanel2.BindUpgrade(j + 1);
+                UpgradePanel3.BindUpgrade(j + 2);
             }
-            else OpenMenu(MenuID.UpgradeShop);
+            else
+            {
+                UpgradeWindow?.SetActive(false);
+            }
         }
         else if (Menus[(int)MenuID.UpgradeShop].activeSelf) 
         {
@@ -345,15 +351,9 @@ public class Messa : MonoBehaviour
     }
     public void StartNewDay()
     {
-        
         InitiateAdepts();
-        if (CurrentDay == 5) 
-        {
-            EndGameHeader?.SetText(BuildEndGameResultHeader());
-            EndGameStats?.SetText(BuildEndGameResultText());
-        }  
-        GameSessionBridge.Instance.ApplyMessaResult(Money,TotalCount(OldAdepts));
-        MusicPlayer.Instance.PlayDefaultMusic();
+        UpgradeWindow?.SetActive(true);
+        GameSessionBridge.Instance.ApplyMessaResult(Money, TotalCount(OldAdepts));
         if (GameSessionBridge.Instance != null) GameSessionBridge.Instance.StartNewDay();
     }
     private void InitiateAdepts()
@@ -363,24 +363,8 @@ public class Messa : MonoBehaviour
         {
             OldAdepts[i] += NewAdepts[i];
             NewAdepts[i] = 0;
+            Auditory[i] = 0;
         }
-        for (int i = 0; i < 5; i++) Auditory[i] = 0;
-    }
-    private string BuildEndGameResultHeader()
-    {
-        if (Money > needMoney && TotalCount(OldAdepts) > needAdepts)
-        {
-            SFXPlayer.Instance.Play("Успех3");
-            return "Филиал принят";
-        }
-        SFXPlayer.Instance.Play("Проигрыш");
-        return "Провал филиала";
-    }
-    private string BuildEndGameResultText()
-    {
-        string text = $"Привлечено адептов: {TotalCount(OldAdepts)} / {needAdepts}\n";
-        text += $"Заработано денег: ${(int)Money} / ${needMoney}\n";
-        return text;
     }
     
     public void AddAdepts(int value)
@@ -404,5 +388,9 @@ public class Messa : MonoBehaviour
                 if (OldAdepts[i] < 0) OldAdepts[i] = 0;
             }
         }
+    }
+    public bool IsGoodGameResult()
+    {
+        return Money >= NeedMoney && GetTotalAdeptsCount() >= NeedAdepts;
     }
 }

@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using TMPro;
 
 public class GameSessionBridge : MonoBehaviour
@@ -57,6 +58,8 @@ public class GameSessionBridge : MonoBehaviour
         public int accountantMoney;
         public string description;
     }
+    [Header("Messa Music")]
+    [SerializeField] private AudioClip MessaMusic;
 
     [Header("Core State")]
     [SerializeField, Min(1)] private int currentDay = 1;
@@ -105,7 +108,6 @@ public class GameSessionBridge : MonoBehaviour
     [SerializeField] private float maxBloggerFlowBonus = 0.30f;
 
     [Header("Panels")]
-    [SerializeField] private GameObject streetPreparePanel;
     [SerializeField] private GameObject streetPanel;
     [SerializeField] private GameObject messaPanel;
     [SerializeField] private StreetResultsWindow endLevelPanel;
@@ -148,7 +150,6 @@ public class GameSessionBridge : MonoBehaviour
     private void Awake() 
     {
         Instance = this;
-        endGamePanel.SetActive(false);
         endLevelPanel.gameObject?.SetActive(false);
     } 
 
@@ -172,7 +173,7 @@ public class GameSessionBridge : MonoBehaviour
 
     public void OpenStreet()
     {
-        streetPreparePanel?.SetActive(false);
+        MusicPlayer.Instance.PlayDefaultMusic();
         messaPanel?.SetActive(false);
         endLevelPanel.gameObject?.SetActive(false);
         endGamePanel?.SetActive(false);
@@ -180,10 +181,15 @@ public class GameSessionBridge : MonoBehaviour
         streetPanel?.SetActive(true);
         StreetDayFlowController.Instance.StartStreetButton();
     }
-
+    public void OpenMainMenu()
+    {
+        Time.timeScale = 1f;
+        MainMenu.Instance.gameObject.SetActive(true);
+        SceneManager.LoadScene(0);
+    }
     public void OpenMessa()
     {
-        streetPreparePanel?.SetActive(false);
+        MusicPlayer.Instance.PlayMusic(MessaMusic);
         streetPanel?.SetActive(false); 
         endLevelPanel.gameObject?.SetActive(false);
         endGamePanel?.SetActive(false);
@@ -192,7 +198,6 @@ public class GameSessionBridge : MonoBehaviour
 
     public void OpenResult()
     {
-        streetPreparePanel?.SetActive(false);
         streetPanel?.SetActive(false);
         messaPanel?.SetActive(false);
         endLevelPanel.gameObject?.SetActive(true);

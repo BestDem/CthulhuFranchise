@@ -12,10 +12,6 @@ public class DayController : MonoBehaviour
     [SerializeField] private TMP_Text dayText;
     [SerializeField] private TMP_Text timerText;
 
-    [Header("Text Settings")]
-    [SerializeField] private string dayPrefix = "День ";
-    [SerializeField] private string finalText = "Финал";
-
     // false = улица стартовала, true = день реально завершён и можно показывать итог.
     public static event Action<bool> dayEnd;
 
@@ -68,13 +64,6 @@ public class DayController : MonoBehaviour
     {
         if (waitingForNextDay)
         {
-            if (currentDayIndex >= GetLastDayIndex())
-            {
-                Debug.Log("Все дни закончились. Нужно открыть финальный экран.");
-                if (dayText != null)
-                    dayText.text = finalText;
-                return;
-            }
 
             currentDayIndex++;
         }
@@ -138,7 +127,6 @@ public class DayController : MonoBehaviour
         timer = 0f;
         LastEndReason = string.IsNullOrEmpty(reason) ? "День завершён" : reason;
         UpdateUI();
-
         Debug.Log("День завершён: " + CurrentDayNumber + " | Причина: " + LastEndReason);
         dayEnd?.Invoke(true);
     }
@@ -180,18 +168,16 @@ public class DayController : MonoBehaviour
 
     private void UpdateUI()
     {
-        if (dayText != null)
-            dayText.text = dayPrefix + CurrentDayNumber;
-
+        if (dayText != null) dayText.text = "День " + CurrentDayNumber;
         UpdateTimerText();
     }
 
     private void UpdateTimerText()
     {
-        if (timerText == null)
-            return;
-
-        int seconds = Mathf.CeilToInt(timer);
-        timerText.text = seconds.ToString();
+        if (timerText != null)
+        {
+            int seconds = Mathf.CeilToInt(timer);
+            timerText.text = seconds.ToString();
+        }       
     }
 }

@@ -74,11 +74,9 @@ public class ComboSystem : MonoBehaviour
 
     private void Start()
     {
-        if (comboText != null)
-            comboBaseScale = comboText.transform.localScale;
+        if (comboText != null) comboBaseScale = comboText.transform.localScale;
 
-        if (moneyText != null)
-            moneyBaseScale = moneyText.transform.localScale;
+        if (moneyText != null) moneyBaseScale = moneyText.transform.localScale;
 
         if (moneyPopupText != null)
         {
@@ -115,9 +113,10 @@ public class ComboSystem : MonoBehaviour
     public void RegisterFlyerResult(bool isCorrect, int correctAmount)
     {
         if (isCorrect)
+        {
             AddComboAmount(correctAmount);
-        else
-            ResetCombo();
+        }         
+        else ResetCombo();
     }
 
     public void AddCombo()
@@ -127,8 +126,7 @@ public class ComboSystem : MonoBehaviour
 
     public void AddComboAmount(int amount)
     {
-        if (amount <= 0)
-            return;
+        if (amount <= 0) return;
 
         int oldCombo = currentCombo;
         currentCombo += amount;
@@ -137,10 +135,11 @@ public class ComboSystem : MonoBehaviour
 
         int moneyReward = 0;
         for (int comboValue = oldCombo + 1; comboValue <= currentCombo; comboValue++)
+        {
             moneyReward += GetRewardForCombo(comboValue);
+        }         
+        if (moneyReward > 0) AddMoney(moneyReward);
 
-        if (moneyReward > 0)
-            AddMoney(moneyReward);
     }
 
     public void ResetCombo()
@@ -151,8 +150,7 @@ public class ComboSystem : MonoBehaviour
 
     public void AddMoney(int amount)
     {
-        if (amount <= 0)
-            return;
+        if (amount <= 0) return;
 
         bool sentToGameMoney = TrySendMoneyToReceiver(amount);
 
@@ -164,50 +162,39 @@ public class ComboSystem : MonoBehaviour
 
     private int GetRewardForCombo(int combo)
     {
-        if (rewards == null)
-            return 0;
+        if (rewards == null) return 0;
 
         for (int i = 0; i < rewards.Length; i++)
         {
-            if (rewards[i] != null && rewards[i].combo == combo)
-                return rewards[i].money;
+            if (rewards[i] != null && rewards[i].combo == combo) return rewards[i].money;
         }
-
         return 0;
     }
 
     private void UpdateComboText()
     {
-        if (comboText != null)
-            comboText.text = comboPrefix + currentCombo;
+        if (comboText != null) comboText.text = comboPrefix + currentCombo;
     }
 
     private void PunchComboText()
     {
-        if (comboText == null)
-            return;
-
-        if (comboPunchRoutine != null)
-            StopCoroutine(comboPunchRoutine);
+        if (comboText == null) return;
+        if (comboPunchRoutine != null) StopCoroutine(comboPunchRoutine);
 
         comboPunchRoutine = StartCoroutine(PunchRoutine(comboText.transform, comboBaseScale));
     }
 
     private void PunchMoneyText()
     {
-        if (moneyText == null)
-            return;
-
-        if (moneyPunchRoutine != null)
-            StopCoroutine(moneyPunchRoutine);
+        if (moneyText == null) return;
+        if (moneyPunchRoutine != null) StopCoroutine(moneyPunchRoutine);
 
         moneyPunchRoutine = StartCoroutine(PunchRoutine(moneyText.transform, moneyBaseScale));
     }
 
     private IEnumerator PunchRoutine(Transform target, Vector3 baseScale)
     {
-        if (target == null)
-            yield break;
+        if (target == null) yield break;
 
         float timer = 0f;
         Vector3 bigScale = baseScale * punchScale;
@@ -234,11 +221,8 @@ public class ComboSystem : MonoBehaviour
 
     private void ShowMoneyPopup(int amount)
     {
-        if (moneyPopupText == null)
-            return;
-
-        if (popupRoutine != null)
-            StopCoroutine(popupRoutine);
+        if (moneyPopupText == null) return;
+        if (popupRoutine != null) StopCoroutine(popupRoutine);
 
         popupRoutine = StartCoroutine(MoneyPopupRoutine(amount));
     }
@@ -279,8 +263,7 @@ public class ComboSystem : MonoBehaviour
 
     private bool TrySendMoneyToReceiver(int amount)
     {
-        if (moneyReceiver != null)
-            return TryInvokeAddMoney(moneyReceiver, amount);
+        if (moneyReceiver != null) return TryInvokeAddMoney(moneyReceiver, amount);
 
         if (GameSessionBridge.Instance != null)
         {
@@ -301,8 +284,8 @@ public class ComboSystem : MonoBehaviour
             null
         );
 
-        if (method == null)
-            return false;
+        if (method == null) return false;
+
 
         method.Invoke(receiver, new object[] { amount });
         return true;

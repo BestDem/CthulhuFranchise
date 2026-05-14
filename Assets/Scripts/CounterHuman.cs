@@ -92,6 +92,6 @@ public class CounterHuman : MonoBehaviour
 
     private void UpdateUI()
     {
-        if (messaVisitorsText != null) messaVisitorsText.text = "В мессе: " + GetTodayVisitors();
+        if (messaVisitorsText != null) messaVisitorsText.text = $"{GetTodayVisitors()}";
     }
 }

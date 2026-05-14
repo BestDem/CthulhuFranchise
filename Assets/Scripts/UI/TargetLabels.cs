@@ -10,8 +10,8 @@ public class TargetLabels : MonoBehaviour
     {
         try
         {
-            needAdepts?.SetText($"Привлечь {Messa.Instance.needAdepts} адептов");
-            needMoney?.SetText($"Заработать ${Messa.Instance.needMoney}");
+            needAdepts?.SetText($"Привлечь {Messa.Instance.NeedAdepts} адептов");
+            needMoney?.SetText($"Заработать ${Messa.Instance.NeedMoney}");
         }
         catch { }       
     }
