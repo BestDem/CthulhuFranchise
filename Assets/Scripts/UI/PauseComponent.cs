@@ -1,50 +1,74 @@
-using UnityEngine;
+﻿using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class PauseComponent : MonoBehaviour
 {
-    [SerializeField] private GameObject MainMenu;
-    [SerializeField] private GameObject PauseMenu;
-    [SerializeField] private GameObject OptionsMenu;
+    [SerializeField] private GameObject mainMenu;
+    [SerializeField] private GameObject cthulhuCanvas;
+
+    [SerializeField] private GameObject pauseMenuPrefab;
+
+    private GameObject pauseMenu;
+
+    [SerializeField] private OptionsMenu optionsMenu;
 
     public static PauseComponent Instance;
 
     private void Awake()
     {
-        if (Instance != null && Instance != this)
-        {
-            Destroy(gameObject);
-            return;
-        }
         Instance = this;
-        DontDestroyOnLoad(gameObject);
+        SceneManager.sceneLoaded += OnSceneLoaded;
     }
 
-    private void Start()
+    private void OnDestroy()
     {
-        PauseMenu?.SetActive(false);
+        SceneManager.sceneLoaded -= OnSceneLoaded;
+        Time.timeScale = 1f;
+    }
+
+    private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+    {
+        mainMenu = GameObject.Find("MainMenu");
+        cthulhuCanvas = GameObject.Find("CthulhuCanvas");
+
+        // пересоздаём pause menu
+        if (pauseMenu != null)
+            Destroy(pauseMenu);
+
+        if (pauseMenuPrefab != null)
+        {
+            pauseMenu = Instantiate(pauseMenuPrefab);
+            optionsMenu = pauseMenu.GetComponentInChildren<OptionsMenu>();
+            pauseMenu.SetActive(false);
+        }
     }
 
     public void Pause()
     {
-        if (MainMenu.activeSelf || PauseMenu == null) return;
-        OptionsMenu?.SetActive(false);
+        if (mainMenu != null && mainMenu.activeSelf) return;
+        if (cthulhuCanvas != null && cthulhuCanvas.activeSelf) return;
 
-        if (PauseMenu.activeSelf && Time.timeScale == 0f)
+        if (pauseMenu == null) return;
+
+
+        if (optionsMenu != null)
+            optionsMenu.gameObject.SetActive(false);
+
+        if (pauseMenu.activeSelf && Time.timeScale == 0f)
         {
-            PauseMenu.SetActive(false);
+            pauseMenu.SetActive(false);
             Time.timeScale = 1f;
-            Cursor.visible = false;
         }
         else if (Time.timeScale == 1f)
         {
-            Cursor.visible = true;
-            PauseMenu.SetActive(true);
+            pauseMenu.SetActive(true);
             Time.timeScale = 0f;
         }
     }
 
     private void Update()
     {
-        if (Input.GetKeyDown(KeyCode.Escape)) Pause();
+        if (Input.GetKeyDown(KeyCode.Escape))
+            Pause();
     }
 }

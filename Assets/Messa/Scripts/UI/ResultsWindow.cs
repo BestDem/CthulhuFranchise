@@ -51,13 +51,13 @@ public class ResultsWindow : MonoBehaviour
 
         if (Messa.Instance.IsUnlocked(Upgrades.PremiumCandles))
         {
-            candleBonusLabel?.SetText($"*{Messa.Instance.CandlesMultiplier}");
+            candleBonusLabel?.SetText($"x{Messa.Instance.CandlesMultiplier}");
         }
         else candleBonusLabel?.SetText("нет улучшения");
 
         if (Messa.Instance.IsUnlocked(Upgrades.PremiumFlyer))
         {
-            premiumFlyerBonusLabel?.SetText($"*{Messa.Instance.PremiumFlyerBonus} ");
+            premiumFlyerBonusLabel?.SetText($"x{Messa.Instance.PremiumFlyerBonus} ");
         }
         else premiumFlyerBonusLabel?.SetText("нет улучшения");
 

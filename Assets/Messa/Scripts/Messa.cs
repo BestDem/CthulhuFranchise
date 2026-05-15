@@ -9,7 +9,7 @@ public class Messa : MonoBehaviour
     public int oldAdeptsCount;
     [Header("Основные параметры")]
     
-    public float messaDuration = 3f;
+    public float messaDuration = 6f;
     public float Money;
     [HideInInspector] public float TotalMoneyIncome;
     [HideInInspector] public float DailyMoneyIncome;
@@ -61,10 +61,10 @@ public class Messa : MonoBehaviour
     public float AltarGoodBonus = 0.06f;
     public float AltarExcellentBonus = 0.08f;
     public float PremiumFlyerBonus = 0.05f;
-    public int AbyssAccountantBonus = 3;
-
     public float EsotericBonusPerUnit = 0.02f;
     public float EsotericBonusCap = 0.20f;
+
+    public int AbyssAccountantBonus = 3;
 
     [Header("Лимиты")]
     public float MaxConversionChance = 0.90f;
@@ -110,7 +110,7 @@ public class Messa : MonoBehaviour
     }
     private void OnEnable()
     {
-        LoadFromBridge();     
+        LoadFromBridge();
     }
     private void LoadFromBridge()
     {    
@@ -133,7 +133,7 @@ public class Messa : MonoBehaviour
     private void OpenMenu(MenuID menuID)
     {
         for (int i = 0; i < Menus.Length; i++) Menus[i]?.SetActive(i == (int)menuID);
-        StatsPanel.SetActive(menuID != MenuID.PendingMessa);
+        StatsPanel.SetActive(menuID != MenuID.PendingMessa && menuID != MenuID.MessaResults);
     }
     public void UpdateUI()
     {
@@ -180,16 +180,15 @@ public class Messa : MonoBehaviour
     }
     public void BuyUpgrade(int i)
     {
-        if (UpgradeList[i].Unlocked) return;
+        if (Money < UpgradeList[i].Price || UpgradeList[i].Unlocked || i >= UpgradeList.Length) return;
 
-        purchasedUpgradesBigPanel.SetActive(true);
-        if (i >= UpgradeList.Length || Money < UpgradeList[i].Price) return;
+        purchasedUpgradesBigPanel.SetActive(true);     
         Money -= UpgradeList[i].Price;
         UpgradeList[i].Unlocked = true;
         SFXPlayer.Instance.Play("Покупка");
         purchasedUpgrades.Add(i);
-        purchasedUpgradesPanels[purchasedUpgrades.Count].gameObject.SetActive(true);
-        purchasedUpgradesPanels[purchasedUpgrades.Count].BindUpgrade(i);
+        purchasedUpgradesPanels[purchasedUpgrades.Count - 1].gameObject.SetActive(true);
+        purchasedUpgradesPanels[purchasedUpgrades.Count - 1].BindUpgrade(i);
         Next();
     }
     public bool IsUnlocked(Upgrades upgrade)
@@ -350,9 +349,12 @@ public class Messa : MonoBehaviour
         }       
     }
     public void StartNewDay()
-    {
+    {      
         InitiateAdepts();
         UpgradeWindow?.SetActive(true);
+
+        if (CurrentDay < 5 && IsUnlocked(Upgrades.AbyssAccountant)) Money += AbyssAccountantBonus;
+
         GameSessionBridge.Instance.ApplyMessaResult(Money, TotalCount(OldAdepts));
         if (GameSessionBridge.Instance != null) GameSessionBridge.Instance.StartNewDay();
     }
