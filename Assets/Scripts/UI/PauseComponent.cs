@@ -4,13 +4,12 @@ using UnityEngine.SceneManagement;
 public class PauseComponent : MonoBehaviour
 {
     [SerializeField] private GameObject mainMenu;
-    [SerializeField] private GameObject cthulhuCanvas;
+    [SerializeField] private GameObject cthulhuCabinet;
 
     [SerializeField] private GameObject pauseMenuPrefab;
 
     private GameObject pauseMenu;
-
-    [SerializeField] private OptionsMenu optionsMenu;
+    private OptionsMenu optionsMenu;
 
     public static PauseComponent Instance;
 
@@ -29,7 +28,7 @@ public class PauseComponent : MonoBehaviour
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
         mainMenu = GameObject.Find("MainMenu");
-        cthulhuCanvas = GameObject.Find("CthulhuCanvas");
+        cthulhuCabinet = GameObject.Find("CthulhuCabinet");
 
         // пересоздаём pause menu
         if (pauseMenu != null)
@@ -46,7 +45,7 @@ public class PauseComponent : MonoBehaviour
     public void Pause()
     {
         if (mainMenu != null && mainMenu.activeSelf) return;
-        if (cthulhuCanvas != null && cthulhuCanvas.activeSelf) return;
+        if (cthulhuCabinet != null && cthulhuCabinet.activeSelf) return;
 
         if (pauseMenu == null) return;
 

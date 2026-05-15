@@ -108,8 +108,8 @@ public class GameSessionBridge : MonoBehaviour
     [SerializeField] private float maxBloggerFlowBonus = 0.30f;
 
     [Header("Panels")]
-    [SerializeField] private GameObject streetPanel;
     [SerializeField] private GameObject messaPanel;
+    [SerializeField] private GameObject streetPanel;
     [SerializeField] private StreetResultsWindow endLevelPanel;
     [SerializeField] private GameObject endGamePanel;
 

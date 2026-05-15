@@ -3,7 +3,6 @@ using UnityEngine;
 public class MainMenu : MonoBehaviour
 {
     public static MainMenu Instance;
-
     private void Awake()
     {
         if (Instance != null && Instance != this)
@@ -13,15 +12,5 @@ public class MainMenu : MonoBehaviour
         }
         Instance = this;
         DontDestroyOnLoad(gameObject);
-    }
-
-    private void Start()
-    {
-        MusicPlayer.Instance.PlayDefaultMusic();
-    }
-
-    private void OnEnable()
-    {
-        MusicPlayer.Instance.PlayDefaultMusic();
-    }
+    }   
 }

@@ -23,8 +23,11 @@ public class MusicPlayer : MonoBehaviour
     }
     public void PlayMusic(AudioClip clip)
     {
-        AudioSource.clip = clip;
-        AudioSource.Play();
+        if (clip != AudioSource.clip)
+        {
+            AudioSource.clip = clip;
+            AudioSource.Play();
+        } 
     }
     public void PlayDefaultMusic()
     {
