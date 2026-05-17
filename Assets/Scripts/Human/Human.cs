@@ -11,7 +11,7 @@ public abstract class Human : MonoBehaviour
     [Header("Old public fields compatibility")]
     public GameObject background;
     public GameObject[] emotion;
-    public string name;
+    public string Name;
     public int reactionState; // 2 = придёт на мессу, 1 = не придёт
     public bool interact = true;
 
@@ -60,7 +60,7 @@ public abstract class Human : MonoBehaviour
     private float safeAbsScaleX = 1f;
     private int currentIdleVisualState; // 0 = обычный idle, 1 = negative, 2 = happy
 
-    public string HumanType => string.IsNullOrEmpty(humanType) ? name : humanType;
+    public string HumanType => string.IsNullOrEmpty(humanType) ? Name : humanType;
     public bool IsGoingToMessa => goingToMessa;
     public bool AlreadyReceivedFlyer => alreadyReceivedFlyer;
     public bool IsInPoliceZone { get; private set; }
@@ -71,7 +71,7 @@ public abstract class Human : MonoBehaviour
         needReaction = GetReactions();
 
         if (string.IsNullOrEmpty(humanType))
-            humanType = name;
+            humanType = Name;
 
         Transform flipTarget = GetFlipTarget();
         if (flipTarget != null)

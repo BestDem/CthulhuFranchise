@@ -8,7 +8,7 @@ public class Blogger : Human
     protected override void Awake()
     {
         SetHumanType("blogger");
-        name = "blogger";
+        Name = "blogger";
         base.Awake();
     }
 

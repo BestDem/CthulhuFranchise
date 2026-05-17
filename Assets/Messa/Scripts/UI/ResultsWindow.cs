@@ -3,80 +3,53 @@ using TMPro;
 
 public class ResultsWindow : MonoBehaviour
 {
-    
-    [SerializeField] private TextMeshProUGUI visitorsLabel;
+    [SerializeField] private TextMeshProUGUI mainResultLabel;
+    [SerializeField] private TextMeshProUGUI visitorsAmountLabel;
     [SerializeField] private TextMeshProUGUI newAdeptsLabel;
-    [SerializeField] private TextMeshProUGUI AdeptsOutflowLabel;
-    [SerializeField] private TextMeshProUGUI oldAdeptsCalculationLabel;
-    [SerializeField] private TextMeshProUGUI oldAdeptsIncomeLabel;
-    [SerializeField] private TextMeshProUGUI MessaResultLabel;
-
-    [SerializeField] private TextMeshProUGUI DailyBaseIncomeLabel;
-    [SerializeField] private TextMeshProUGUI DailyTotalIncomeLabel;
-    [SerializeField] private TextMeshProUGUI DailyIncomeLabel;
-
-    [SerializeField] private TextMeshProUGUI firstRowBonusLabel;
-    [SerializeField] private TextMeshProUGUI candleBonusLabel;
-    [SerializeField] private TextMeshProUGUI premiumFlyerBonusLabel;
-
+    [SerializeField] private TextMeshProUGUI adeptsOutflowLabel;
+    [SerializeField] private TextMeshProUGUI dailyIncomeLabel;
     [SerializeField] private TextMeshProUGUI[] visitorsCountLabels;
-    [SerializeField] private TextMeshProUGUI[] adeptsConversionLabels;
     [SerializeField] private TextMeshProUGUI[] newAdeptsCountLabels;
-    [SerializeField] private TextMeshProUGUI[] incomeCalculationLabels;
-    [SerializeField] private TextMeshProUGUI[] baseIncomeLabels;
+    [SerializeField] private TextMeshProUGUI[] MoneyIncomeLabels;
 
-    
+    private Color goodResultColor;
+  
     private void Start()
     {
+        goodResultColor = mainResultLabel.color;
         UpdateUI();
     }
-
     private void OnEnable()
     {
         UpdateUI();
     }
-
     private void UpdateUI()
     {
-        visitorsLabel?.SetText(Messa.Instance.GetVisitorsCount());
+        if(Messa.Instance.ResultText.Contains("Плохая"))
+        {
+            var color = goodResultColor;
+            color.r = goodResultColor.g;
+            color.g = goodResultColor.r;
+            mainResultLabel.color = color;
+        }
+        else mainResultLabel.color = goodResultColor;
+
+        mainResultLabel?.SetText(Messa.Instance.ResultText);
+        visitorsAmountLabel?.SetText(Messa.Instance.GetVisitorsCount());
         newAdeptsLabel?.SetText(Messa.Instance.GetNewAdeptsCount());
-        AdeptsOutflowLabel?.SetText(Messa.Instance.GetAdeptsOutflow());
-        MessaResultLabel?.SetText(Messa.Instance.MessaResult);
+        adeptsOutflowLabel?.SetText(Messa.Instance.GetAdeptsOutflow());
 
-        if (Messa.Instance.IsUnlocked(Upgrades.PaidFrontRow))
-        {
-            firstRowBonusLabel?.SetText($"+{Messa.Instance.PaidFrontRowBonus * Messa.Instance.Auditory[0]}");
-        }
-        else firstRowBonusLabel?.SetText("нет улучшения");
-
-        if (Messa.Instance.IsUnlocked(Upgrades.PremiumCandles))
-        {
-            candleBonusLabel?.SetText($"x{Messa.Instance.CandlesMultiplier}");
-        }
-        else candleBonusLabel?.SetText("нет улучшения");
-
-        if (Messa.Instance.IsUnlocked(Upgrades.PremiumFlyer))
-        {
-            premiumFlyerBonusLabel?.SetText($"x{Messa.Instance.PremiumFlyerBonus} ");
-        }
-        else premiumFlyerBonusLabel?.SetText("нет улучшения");
 
         for (int i = 0; i < 5; i++)
         {
             try
             {
-                visitorsCountLabels[i]?.SetText($"{Messa.Instance.Auditory[i]}");
-                adeptsConversionLabels[i]?.SetText($"{(int)(Messa.Instance.BaseConversion[i] * Messa.Instance.ConversionMultiplier * 100f)}%");
-                newAdeptsCountLabels[i]?.SetText($"{Messa.Instance.NewAdepts[i]}");
-                incomeCalculationLabels[i]?.SetText($"{Messa.Instance.Auditory[i]} * {Messa.Instance.BaseIncome[i]}");
-                baseIncomeLabels[i]?.SetText($"${Messa.Instance.Auditory[i] * Messa.Instance.BaseIncome[i]}");
+                visitorsCountLabels[i]?.SetText($"Пришло: {Messa.Instance.Auditory[i]}");
+                newAdeptsCountLabels[i]?.SetText($"Стали адептами: {Messa.Instance.NewAdepts[i]}");
+                MoneyIncomeLabels[i]?.SetText($"${Messa.Instance.DailyMoneyIncomes[i]}");
             }
             catch { }          
         }
-        oldAdeptsCalculationLabel?.SetText($"{Messa.Instance.GetOldAdeptsCount()} * {Messa.Instance.OldAdeptIncomeMultiplier}");
-        oldAdeptsIncomeLabel?.SetText($"${Messa.Instance.GetOldAdeptsCount() * Messa.Instance.OldAdeptIncomeMultiplier}");
-        DailyBaseIncomeLabel?.SetText($"${(int)Messa.Instance.DailyBaseIncome}");
-        DailyTotalIncomeLabel?.SetText($"Итоговый доход: ${(int)Messa.Instance.DailyMoneyIncome}");
-        DailyIncomeLabel?.SetText($"${(int)Messa.Instance.DailyMoneyIncome}");
+        dailyIncomeLabel?.SetText($"${(int)Messa.Instance.DailyMoneyIncome}");
     }
 }

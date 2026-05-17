@@ -8,7 +8,7 @@ public class Esoteric : Human
     protected override void Awake()
     {
         SetHumanType("esoteric");
-        name = "esoteric";
+        Name = "esoteric";
         base.Awake();
     }
 

@@ -4,7 +4,7 @@ public enum MenuID
     MessaResults,
     UpgradeShop,
     PendingMessa,
-    MainMessaResults,
+    ResultDetails
 }
 public enum Upgrades
 {

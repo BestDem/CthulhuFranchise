@@ -8,7 +8,7 @@ public class Retiree : Human
     protected override void Awake()
     {
         SetHumanType("retiree");
-        name = "retiree";
+        Name = "retiree";
         base.Awake();
     }
 

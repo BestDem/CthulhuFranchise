@@ -11,21 +11,20 @@ public class Messa : MonoBehaviour
     
     public float messaDuration = 6f;
     public float Money;
-    [HideInInspector] public float TotalMoneyIncome;
     [HideInInspector] public float DailyMoneyIncome;
+    [HideInInspector] public float[] DailyMoneyIncomes = new float[5];
     [HideInInspector] public int CurrentDay = 1;
 
     [HideInInspector] public int[] Auditory = new int[5];
     [HideInInspector] public int[] NewAdepts = new int[5];
     [HideInInspector] public int[] OldAdepts = new int[5];
-    [HideInInspector] public string MessaResult = "Отличная месса";
+    [HideInInspector] public string ResultText = "Отличная месса!";
 
     [Header("Базовая конверсия")]
     public float[] BaseConversion = new float[5] { 0.30f, 0.52f, 0.34f, 0.30f, 0.38f };
     public float ConversionMultiplier;
 
     [Header("Базовый доход")]
-    [HideInInspector] public float DailyBaseIncome;
     public float[] BaseIncome = new float[5] { 4.0f, 0.8f, 1.4f, 1.1f, 1.3f };
     
     public float OldAdeptIncomeMultiplier = 0.45f;
@@ -56,15 +55,20 @@ public class Messa : MonoBehaviour
     public float ExcellentThreshold = 0.50f;
 
 
-    [Header("Бонусы")]
-    public float CookieBonus = 0.12f;
-    public float AltarGoodBonus = 0.06f;
-    public float AltarExcellentBonus = 0.08f;
-    public float PremiumFlyerBonus = 0.05f;
+    [Header("Бонусы к конверсии")]
+    public float CookieBonus = 0.1f;
+    public float AltarBonus = 0.08f;
+    public float PremiumFlyerConversionBonus = 0.05f;
     public float EsotericBonusPerUnit = 0.02f;
-    public float EsotericBonusCap = 0.20f;
+    public float EsotericBonus = 0f;
 
-    public int AbyssAccountantBonus = 3;
+    [HideInInspector] public float[] ConversionChances = new float[5];
+
+    [Header("Бонусы к доходу")]
+    public int PaidFrontRowBonusPerUnit = 1;
+    public float PremiumCandlesMultiplier = 1.20f;
+    public float PremiumFlyerMoneyBonus = 1.25f;
+    public int AbyssAccountantBonus = 20;
 
     [Header("Лимиты")]
     public float MaxConversionChance = 0.90f;
@@ -75,10 +79,6 @@ public class Messa : MonoBehaviour
     public float MinChurn = 0.02f;
     public float ChoirMultiplier = 0.5f;
 
-    [Header("Доход")]  
-    public float PaidFrontRowBonus = 1.5f;
-    public float CandlesMultiplier = 1.20f;
-    public float PremiumIncomeMultiplier = 1.25f;
 
     [Header("UI")]
     public GameObject StatsPanel;
@@ -133,7 +133,13 @@ public class Messa : MonoBehaviour
     private void OpenMenu(MenuID menuID)
     {
         for (int i = 0; i < Menus.Length; i++) Menus[i]?.SetActive(i == (int)menuID);
-        StatsPanel.SetActive(menuID != MenuID.PendingMessa && menuID != MenuID.MessaResults);
+        StatsPanel.SetActive(menuID != MenuID.PendingMessa);
+    }
+    public void OpenMenu(int menuID)
+    {
+        SFXPlayer.Instance.Play("Клик");
+        for (int i = 0; i < Menus.Length; i++) Menus[i]?.SetActive(i == menuID);
+        StatsPanel.SetActive((MenuID)menuID != MenuID.PendingMessa);
     }
     public void UpdateUI()
     {
@@ -178,10 +184,17 @@ public class Messa : MonoBehaviour
     {
         return $"{oldAdeptsCount - TotalCount(OldAdepts)}";
     }
+    public int GetFrontRowBonus()
+    {
+        return IsUnlocked(Upgrades.PaidFrontRow) ? Auditory[0] * PaidFrontRowBonusPerUnit : 0;
+    }
     public void BuyUpgrade(int i)
     {
-        if (Money < UpgradeList[i].Price || UpgradeList[i].Unlocked || i >= UpgradeList.Length) return;
-
+        if (Money < UpgradeList[i].Price || UpgradeList[i].Unlocked || i >= UpgradeList.Length)
+        {
+            SFXPlayer.Instance.Play("Клик");
+            return;
+        } 
         purchasedUpgradesBigPanel.SetActive(true);     
         Money -= UpgradeList[i].Price;
         UpgradeList[i].Unlocked = true;
@@ -226,32 +239,21 @@ public class Messa : MonoBehaviour
             isGoodOrBetter = true;
             isExcellent = true;
         }
-        float esotericBonus = Mathf.Min(Auditory[4] * EsotericBonusPerUnit, EsotericBonusCap);
-        int[] adeptsBefore = (int[])OldAdepts.Clone();
-        int totalAdeptsBefore = TotalCount(adeptsBefore);
-        int[] newConverted = new int[5];
+        EsotericBonus = Auditory[4] * EsotericBonusPerUnit;
 
         for (int i = 0; i < 5; i++)
         {
-            for (int j = 0; j < Auditory[i]; j++)
-            {
-                float chance = BaseConversion[i] * ConversionMultiplier;
+            float chance = BaseConversion[i] * ConversionMultiplier;
 
-                if (IsUnlocked(Upgrades.CookiesAfterMessa) && i == 1) chance += CookieBonus;
+            if (IsUnlocked(Upgrades.CookiesAfterMessa) && i == 1) chance += CookieBonus;
 
-                if (IsUnlocked(Upgrades.BeautifulAltar))
-                {
-                    if (isExcellent) chance += AltarExcellentBonus;
-                    else if (isGoodOrBetter) chance += AltarGoodBonus;
-                }
-                chance += esotericBonus;
+            if (IsUnlocked(Upgrades.BeautifulAltar)) chance += AltarBonus;
+            chance += EsotericBonus;
 
-                if (IsUnlocked(Upgrades.PremiumFlyer)) chance += PremiumFlyerBonus;
-                chance = Mathf.Min(chance, MaxConversionChance);
+            if (IsUnlocked(Upgrades.PremiumFlyer)) chance += PremiumFlyerConversionBonus;
 
-                if (Random.value <= chance) newConverted[i]++;
-
-            }
+            ConversionChances[i] = Mathf.Min(chance, MaxConversionChance);
+            NewAdepts[i] = Mathf.RoundToInt(Auditory[i] * ConversionChances[i]);
         }
         int lostTotal = 0;
         if (isBad)
@@ -263,44 +265,40 @@ public class Messa : MonoBehaviour
 
             for (int i = 0; i < 5; i++)
             {
-                int lost = Mathf.RoundToInt(adeptsBefore[i] * churn);
-                OldAdepts[i] = adeptsBefore[i] - lost;
+                int lost = Mathf.RoundToInt(OldAdepts[i] * churn);
+                OldAdepts[i] = OldAdepts[i] - lost;
                 lostTotal += lost;
             }
         }
-        for (int i = 0; i < 5; i++) NewAdepts[i] += newConverted[i];
-
-        float visitorIncome = 0f;
+        DailyMoneyIncome = 0f;
 
         for (int i = 0; i < 5; i++)
         {
-            float income = BaseIncome[i] * Auditory[i];
-            if (IsUnlocked(Upgrades.PremiumFlyer)) income *= PremiumIncomeMultiplier;
-            visitorIncome += income;
+            DailyMoneyIncomes[i] = BaseIncome[i] * Auditory[i];
+            if (IsUnlocked(Upgrades.PremiumFlyer)) DailyMoneyIncomes[i] *= PremiumFlyerMoneyBonus;
+            if (IsUnlocked(Upgrades.PremiumCandles)) DailyMoneyIncomes[i] *= PremiumCandlesMultiplier;
+            DailyMoneyIncome += DailyMoneyIncomes[i];
         }
-        float oldAdeptIncome = totalAdeptsBefore * OldAdeptIncomeMultiplier;
+        float oldAdeptIncome = TotalCount(OldAdepts) * OldAdeptIncomeMultiplier;
 
-        float frontRow = IsUnlocked(Upgrades.PaidFrontRow) ? Auditory[0] * PaidFrontRowBonus : 0f;
+        DailyMoneyIncome += oldAdeptIncome;
+        DailyMoneyIncome = DailyMoneyIncome + GetFrontRowBonus();
 
-        DailyBaseIncome = visitorIncome + oldAdeptIncome;
-        DailyMoneyIncome = DailyBaseIncome + frontRow;
-
-        if (IsUnlocked(Upgrades.PremiumCandles) && isGoodOrBetter) DailyMoneyIncome *= CandlesMultiplier;
+        if (IsUnlocked(Upgrades.PremiumCandles) && isGoodOrBetter) DailyMoneyIncome *= PremiumCandlesMultiplier;
 
         Money += DailyMoneyIncome;
-        TotalMoneyIncome += DailyMoneyIncome;
 
         if (isExcellent)
         {
-            MessaResult = "Отличная месса";
+            ResultText = "Отличная месса!";
         }
         if (isGoodOrBetter)
         {
-            MessaResult = "Хорошая месса";
+            ResultText = "Хорошая месса!";
         }
         if (isBad || TotalCount(Auditory) == 0)
         {
-            MessaResult = "Плохая месса";
+            ResultText = "Плохая месса!";
         }
         StartCoroutine(MessaCoroutine());
     }
@@ -311,7 +309,7 @@ public class Messa : MonoBehaviour
         SFXPlayer.Instance.Play("");    
         yield return new WaitForSeconds(messaDuration);
         UpdateUI();      
-        OpenMenu(MenuID.MainMessaResults);
+        OpenMenu(MenuID.MessaResults);
         SFXPlayer.Instance.Stop();
     }
     public void Next()
@@ -321,14 +319,10 @@ public class Messa : MonoBehaviour
         if (Menus[(int)MenuID.PendingMessa].activeSelf)
         {
             StopAllCoroutines();
-            OpenMenu(MenuID.MainMessaResults);
+            OpenMenu(MenuID.MessaResults);
             SFXPlayer.Instance.Stop();
         }
-        else if (Menus[(int)MenuID.MainMessaResults].activeSelf)
-        {
-            OpenMenu(MenuID.MessaResults);
-        }
-        else if (Menus[(int)MenuID.MessaResults].activeSelf)
+        else if (Menus[(int)MenuID.MessaResults].activeSelf || Menus[(int)MenuID.ResultDetails].activeSelf)
         {
             OpenMenu(MenuID.UpgradeShop);
             if (CurrentDay <= 4)
@@ -349,7 +343,7 @@ public class Messa : MonoBehaviour
         }       
     }
     public void StartNewDay()
-    {      
+    {
         InitiateAdepts();
         UpgradeWindow?.SetActive(true);
 

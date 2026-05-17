@@ -8,7 +8,7 @@ public class Student : Human
     protected override void Awake()
     {
         SetHumanType("student");
-        name = "student";
+        Name = "student";
         base.Awake();
     }
 
