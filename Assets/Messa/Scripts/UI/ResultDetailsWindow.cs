@@ -49,9 +49,13 @@ public class ResultDetailsWindow : MonoBehaviour
     [Header("Аватары посетителей")]
     [SerializeField] private Image VisitorAvatar;
     [SerializeField] private Sprite[] VisitorAvatarSprites;
+
+    private int currentIndex;
     public void UpdateData(int i)
     {
         if (i > 4) return;
+
+        currentIndex = i;
 
         visitorTypeLabel1?.SetText("Подробно: " + visitorTypeStrings1[i].ToLower());
         visitorTypeLabel2?.SetText("Итог по " + visitorTypeStrings2[i].ToLower());
@@ -62,9 +66,9 @@ public class ResultDetailsWindow : MonoBehaviour
         dailyIncomeLabel?.SetText($"${Messa.Instance.DailyMoneyIncomes[i]}");
         cthulhuCommentLabel?.SetText(cthulhuComments[i]);
 
-        float dailyBaseIncome = Messa.Instance.Auditory[i] * Messa.Instance.BaseIncome[i];
+        float dailyBaseIncome = Messa.Instance.NewAdepts[i] * Messa.Instance.BaseIncome[i];
 
-        baseIncomeLabel?.SetText($"{Messa.Instance.Auditory[i]} * ${Messa.Instance.BaseIncome[i]} = {dailyBaseIncome}");
+        baseIncomeLabel?.SetText($"{Messa.Instance.NewAdepts[i]} * ${Messa.Instance.BaseIncome[i]} = {dailyBaseIncome}");
         totalIncomeLabel?.SetText($"Итоговый доход: ${Messa.Instance.DailyMoneyIncomes[i]}");
         bonusesHeader.SetText(Messa.Instance.DailyMoneyIncomes[i] <= dailyBaseIncome ? "Бонусов нет" : "Бонусы");
 
@@ -118,4 +122,12 @@ public class ResultDetailsWindow : MonoBehaviour
         }
         else premiumFlyerMoneyBonus?.SetActive(false);    
     }  
+    public void Next()
+    {
+        if (currentIndex < 4)
+        {
+            UpdateData(currentIndex + 1);
+        }
+        else Messa.Instance.OpenMenu(1);
+    }
 }

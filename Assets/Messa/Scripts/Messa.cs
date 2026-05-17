@@ -25,9 +25,7 @@ public class Messa : MonoBehaviour
     public float ConversionMultiplier;
 
     [Header("Базовый доход")]
-    public float[] BaseIncome = new float[5] { 4.0f, 0.8f, 1.4f, 1.1f, 1.3f };
-    
-    public float OldAdeptIncomeMultiplier = 0.45f;
+    public float[] BaseIncome = new float[5] { 5.0f, 1.2f, 1.6f, 2.2f, 1.8f };
 
     [Header("Целевые значения")]
     public int NeedAdepts = 15;
@@ -53,7 +51,6 @@ public class Messa : MonoBehaviour
     public float BadThreshold = 0.18f;
     public float GoodThreshold = 0.34f;
     public float ExcellentThreshold = 0.50f;
-
 
     [Header("Бонусы к конверсии")]
     public float CookieBonus = 0.1f;
@@ -274,14 +271,11 @@ public class Messa : MonoBehaviour
 
         for (int i = 0; i < 5; i++)
         {
-            DailyMoneyIncomes[i] = BaseIncome[i] * Auditory[i];
+            DailyMoneyIncomes[i] = BaseIncome[i] * NewAdepts[i];
             if (IsUnlocked(Upgrades.PremiumFlyer)) DailyMoneyIncomes[i] *= PremiumFlyerMoneyBonus;
             if (IsUnlocked(Upgrades.PremiumCandles)) DailyMoneyIncomes[i] *= PremiumCandlesMultiplier;
             DailyMoneyIncome += DailyMoneyIncomes[i];
         }
-        float oldAdeptIncome = TotalCount(OldAdepts) * OldAdeptIncomeMultiplier;
-
-        DailyMoneyIncome += oldAdeptIncome;
         DailyMoneyIncome = DailyMoneyIncome + GetFrontRowBonus();
 
         if (IsUnlocked(Upgrades.PremiumCandles) && isGoodOrBetter) DailyMoneyIncome *= PremiumCandlesMultiplier;
