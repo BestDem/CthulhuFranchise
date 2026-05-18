@@ -25,7 +25,7 @@ public class Messa : MonoBehaviour
     public float ConversionMultiplier;
 
     [Header("Базовый доход")]
-    public float[] BaseIncome = new float[5] { 5.0f, 1.2f, 1.6f, 2.2f, 1.8f };
+    public int[] BaseIncome = new int[5] { 10, 2, 3, 5, 3 };
 
     [Header("Целевые значения")]
     public int NeedAdepts = 15;

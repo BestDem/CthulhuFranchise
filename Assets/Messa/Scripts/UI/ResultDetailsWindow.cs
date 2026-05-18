@@ -70,7 +70,8 @@ public class ResultDetailsWindow : MonoBehaviour
 
         baseIncomeLabel?.SetText($"{Messa.Instance.NewAdepts[i]} * ${Messa.Instance.BaseIncome[i]} = {dailyBaseIncome}");
         totalIncomeLabel?.SetText($"Итоговый доход: ${Messa.Instance.DailyMoneyIncomes[i]}");
-        bonusesHeader.SetText(Messa.Instance.DailyMoneyIncomes[i] <= dailyBaseIncome ? "Бонусов нет" : "Бонусы");
+
+        bonusesHeader.SetText("Бонусов нет");
 
         //Бонусы к конверсии
         baseChanceLabel?.SetText($"{Messa.Instance.BaseConversion[i] * 100}%");     
@@ -105,6 +106,7 @@ public class ResultDetailsWindow : MonoBehaviour
         {
             firstRowBonus?.SetActive(true);
             firstRowBonusLabel?.SetText($"+${Messa.Instance.GetFrontRowBonus()}");
+            bonusesHeader.SetText("Бонусы");
         }
         else firstRowBonus.SetActive(false);
 
@@ -112,6 +114,7 @@ public class ResultDetailsWindow : MonoBehaviour
         {
             premiumCandleBonus?.SetActive(true);
             premiumCandleBonusLabel?.SetText($"x{Messa.Instance.PremiumCandlesMultiplier}");
+            bonusesHeader.SetText("Бонусы");
         }
         else premiumCandleBonus?.SetActive(false);
 
@@ -119,6 +122,7 @@ public class ResultDetailsWindow : MonoBehaviour
         {
             premiumFlyerMoneyBonus?.SetActive(true);
             premiumFlyerBonusLabel?.SetText($"x{Messa.Instance.PremiumFlyerMoneyBonus}");
+            bonusesHeader.SetText("Бонусы");
         }
         else premiumFlyerMoneyBonus?.SetActive(false);    
     }  
